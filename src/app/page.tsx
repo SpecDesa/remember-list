@@ -11,24 +11,31 @@ const mockUrls = [
   "https://utfs.io/f/fc293c6e-7ba9-4281-a1f7-99965314538c-v2jhnj.png",
 ];
 export default async function HomePage() {
-  const posts = await db.query.posts.findMany();
+  const items = await db.query.items.findMany({
+    orderBy: (model, {desc}) => desc(model.id),  // Make newest come first. maybe lowest quantity first.  
+  });
 
-  console.log("posts", posts)
+  
+ 
+  console.log("items", items)
 
-  const mockImages = mockUrls.map((url, index) => ({
-    id: index + 1,
-    url,
-  }));
+  // const mockImages = mockUrls.map((url, index) => ({
+  //   id: index + 1,
+  //   url,
+  // }));
+
   return (
     <main className="">
       <div className="flex flex-wrap gap-4">
-        {[...mockImages, ...mockImages, ...mockImages, ...mockImages].map(
+      {items.map((item) => (<div className="w-48" key={`${item.id}`}>{item.name}</div>))
+      }
+        {/* {[...mockImages, ...mockImages, ...mockImages, ...mockImages].map(
           (image, index) => (
             <div key={image.url + "_" + index} className="w-48">
               <Image width={200} height={200} src={image.url} alt="image" />
             </div>
           ),
-        )}
+        )} */}
       </div>
     </main>
   );
