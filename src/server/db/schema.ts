@@ -20,10 +20,24 @@ import {
  */
 export const createTable = pgTableCreator((name) => `remember-list_${name}`);
 
+export const images = createTable (
+  "image",
+  {
+    id: serial("id").primaryKey().notNull(),
+    name: varchar("name", {length: 1024}),
+    url: varchar("url", {length: 1024})
+  },
+  (example) => ({
+    nameIndex: index("image_name_idx").on(example.name),
+    // categoryIdIndex: index("category_id_idx").on(example.categoryId),
+  })
+)
+
 export const lists = createTable(
   "list",
   {
     id: serial("id").primaryKey().notNull(),
+    userId: varchar("user_id", {length: 1024}).notNull(),
     name: varchar("name", {length: 1024}),
   }
 )

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { db } from "~/server/db";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { getTasks } from "~/server/db/queries";
 
 export const dynamic = "force-dynamic"
 
@@ -14,9 +15,10 @@ export const dynamic = "force-dynamic"
 
 
 async function Tasks () {
-  const items = await db.query.items.findMany({
-    orderBy: (model, {desc}) => desc(model.id),  // Make newest come first. maybe lowest quantity first.  
-  });
+  const items = await getTasks();
+  // await db.query.items.findMany({
+  //   orderBy: (model, {desc}) => desc(model.id),  // Make newest come first. maybe lowest quantity first.  
+  // });
     // const mockImages = mockUrls.map((url, index) => ({
   //   id: index + 1,
   //   url,

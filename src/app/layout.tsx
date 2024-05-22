@@ -2,7 +2,7 @@ import "~/styles/globals.css";
 
 import { GeistSans } from "geist/font/sans";
 import { ClerkProvider, SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
-import { TopNav } from "./_components/page";
+import { TopNav } from "./_components/topnav";
 
 
 export const metadata = {
