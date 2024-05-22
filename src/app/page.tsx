@@ -1,6 +1,3 @@
-import Link from "next/link";
-import Image from "next/image";
-import { db } from "~/server/db";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { getTasks } from "~/server/db/queries";
 
