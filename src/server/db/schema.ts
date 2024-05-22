@@ -20,6 +20,14 @@ import {
  */
 export const createTable = pgTableCreator((name) => `remember-list_${name}`);
 
+export const lists = createTable(
+  "list",
+  {
+    id: serial("id").primaryKey().notNull(),
+    name: varchar("name", {length: 1024}),
+  }
+)
+
 export const items = createTable(
   "item",
   {
@@ -89,5 +97,23 @@ export const userItems = createTable(
     userIdIndex: index("user_item_user_id_idx").on(example.userId),
     itemIdIndex: index("user_item_item_id_idx").on(example.itemId),
     uniqueUserItem: unique("user_item_unique_user_item").on(example.userId, example.itemId),
+  })
+);
+
+// UserItems table to manage items shared with users
+export const userLists = createTable(
+  "user_list",
+  {
+    id: serial("id").primaryKey().notNull(),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    listId: integer("list_id").references(() => lists.id).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (example) => ({
+    userIdIndex: index("user_list_user_id_idx").on(example.userId),
+    listIdIndex: index("user_list_list_id_idx").on(example.listId),
+    uniqueUserItem: unique("user_list_unique_user_list").on(example.userId, example.listId),
   })
 );
