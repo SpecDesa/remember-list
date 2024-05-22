@@ -26,16 +26,17 @@ async function Tasks () {
 
 
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="flex flex-wrap justify-center gap-4">
     {items.map((item) => (<div className="w-48" key={`${item.id}`}>{item.name}</div>))
     }
       {/* {[...mockImages, ...mockImages, ...mockImages, ...mockImages].map(
         (image, index) => (
           <div key={image.url + "_" + index} className="w-48">
             <Image width={200} height={200} src={image.url} alt="image" />
-          </div>
-        ),
-      )} */}
+            <Image style={{objectFit: "contain"}} src={"/asdsad"} alt="image" />
+            </div>
+          ),
+        )} */}
     </div>
   )
 }
