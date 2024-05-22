@@ -14,10 +14,10 @@ export function TopNav() {
         <div className="flex flex-row ">
           <SignedOut><SignInButton /></SignedOut>
           <SignedIn>
-            <UploadButton endpoint="imageUploader"
+            {/* <UploadButton endpoint="imageUploader"
               onClientUploadComplete={() => {
                 router.refresh();
-                }}/>
+                }}/> */}
             <UserButton />
             </SignedIn>
         </div>
