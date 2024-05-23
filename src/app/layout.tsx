@@ -22,6 +22,7 @@ export default function RootLayout({
         <html lang="en">
           <body className={`${GeistSans.variable} dark flex flex-col gap-4`}>
             <TopNav />
+            {/* <div className="flex justify-end mx-2 md:invisible">Burger menu</div> */}
             {children}
           </body>
         </html>

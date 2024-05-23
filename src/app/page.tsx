@@ -1,5 +1,10 @@
 import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { ScrollArea } from "~/components/ui/scroll-area";
+import { Separator } from "~/components/ui/separator";
 import { getTasks } from "~/server/db/queries";
+import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
+import { Button } from "~/components/ui/button";
+import Lists from "./_components/lists";
 
 export const dynamic = "force-dynamic"
 
@@ -11,45 +16,18 @@ export const dynamic = "force-dynamic"
 // ];
 
 
-async function Tasks () {
-  const items = await getTasks();
-  // await db.query.items.findMany({
-  //   orderBy: (model, {desc}) => desc(model.id),  // Make newest come first. maybe lowest quantity first.  
-  // });
-    // const mockImages = mockUrls.map((url, index) => ({
-  //   id: index + 1,
-  //   url,
-  // }));
-
-
-  return (
-    <div className="flex flex-wrap justify-center gap-4">
-    {items.map((item) => (<div className="w-48" key={`${item.id}`}>{item.name}</div>))
-    }
-      {/* {[...mockImages, ...mockImages, ...mockImages, ...mockImages].map(
-        (image, index) => (
-          <div key={image.url + "_" + index} className="w-48">
-            <Image width={200} height={200} src={image.url} alt="image" />
-            <Image style={{objectFit: "contain"}} src={"/asdsad"} alt="image" />
-            </div>
-          ),
-        )} */}
-    </div>
-  )
-}
-
 export default async function HomePage() {
-  return (
-    <main className="">
-      <SignedOut>
-        <div className="w-full h-full text-2xl text-center">
-          Please sign in above
-        </div>
-        </SignedOut>
-      <SignedIn>
-         <Tasks />
-      </SignedIn>
+    return (
+            <main className="">
+            <SignedOut>
+            <div className="w-full h-full text-2xl text-center">
+            Please sign in above
+            </div>
+            </SignedOut>
+            <SignedIn>
+            <Lists />
+            </SignedIn>
 
-    </main>
-  );
+            </main>
+           );
 }

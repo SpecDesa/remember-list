@@ -12,6 +12,9 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+import type { AnyPgColumn } from "drizzle-orm/pg-core";
+import { ListStatus } from "./types";
+
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
  * database instance for multiple projects.
@@ -20,53 +23,61 @@ import {
  */
 export const createTable = pgTableCreator((name) => `remember-list_${name}`);
 
-export const images = createTable (
-  "image",
-  {
-    id: serial("id").primaryKey().notNull(),
-    name: varchar("name", {length: 1024}),
-    url: varchar("url", {length: 1024})
-  },
-  (example) => ({
-    nameIndex: index("image_name_idx").on(example.name),
-    // categoryIdIndex: index("category_id_idx").on(example.categoryId),
-  })
-)
 
 export const lists = createTable(
-  "list",
+  "lists",
   {
     id: serial("id").primaryKey().notNull(),
-    userId: varchar("user_id", {length: 1024}).notNull(),
+//     userId: varchar("user_id", {length: 1024}).notNull(),
     name: varchar("name", {length: 1024}),
+    // parentId: integer("parent_id").references((): AnyPgColumn => lists.id),
+    type: varchar("type", {length: 256 }).default(ListStatus.STOCKING).notNull(),
   }
 )
 
+export const listsRelationships = createTable(
+  "lists_relationships",
+  {
+    id: serial("id").primaryKey().notNull(),
+    parentListId: integer("parent_list_id").references(() => lists.id).notNull(),
+    childListId: integer("child_list_id").references(() => lists.id).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (example) => ({
+    parentListIdIndex: index("lists_relationships_parent_list_id_idx").on(
+      example.parentListId
+    ),
+    childListIdIndex: index("lists_relationships_child_list_id_idx").on(
+      example.childListId
+    ),
+  })
+);
+
 export const items = createTable(
-  "item",
+  "items",
   {
     id: serial("id").primaryKey().notNull(),
     name: varchar("name", { length: 256 }),
-    categoryId: integer("category_id").references(() => categories.id),
+    listsId: integer("lists_id").references(() => lists.id).notNull(),
     quantity: integer("quantity").default(0).notNull(),
-    threshold: integer("threshold").default(0).notNull(), // Minimum quantity to maintain
+    threshold: integer("threshold"), // Minimum quantity to maintain
     timeThreshold: varchar("time_threshold", { length: 256 }), // Interval to buy the item (e.g., '1 week', '1 month')
     lastPurchased: timestamp("last_purchased", { withTimezone: true }), // Last time the item was purchased
-    status: varchar("status", { length: 50 }).default('needed').notNull(), // Status could be 'needed' or 'at home'
     createdAt: timestamp("created_at", { withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     updatedAt: timestamp("updatedAt", { withTimezone: true }),
   },
   (example) => ({
-    nameIndex: index("item_name_idx").on(example.name),
-    // categoryIdIndex: index("category_id_idx").on(example.categoryId),
+    nameIndex: index("items_name_idx").on(example.name),
   })
 );
 
 // Users table to manage individual users
 export const users = createTable(
-  "user",
+  "users",
   {
     id: serial("id").primaryKey().notNull(),
     username: varchar("username", { length: 256 }).notNull().unique(),
@@ -76,58 +87,26 @@ export const users = createTable(
       .notNull(),
   },
   (example) => ({
-    usernameIndex: index("user_username_idx").on(example.username),
-    emailIndex: index("user_email_idx").on(example.email),
+    usernameIndex: index("users_username_idx").on(example.username),
+    emailIndex: index("users_email_idx").on(example.email),
   })
 );
 
-// Categories table to organize items
-export const categories = createTable(
-  "category",
-  {
-    id: serial("id").primaryKey().notNull(),
-    name: varchar("name", { length: 256 }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-  },
-  (example) => ({
-    nameIndex: index("category_name_idx").on(example.name),
-  })
-);
 
 // UserItems table to manage items shared with users
-export const userItems = createTable(
-  "user_item",
+export const listsUsers = createTable(
+  "lists_users",
   {
     id: serial("id").primaryKey().notNull(),
-    userId: integer("user_id").references(() => users.id).notNull(),
-    itemId: integer("item_id").references(() => items.id).notNull(),
+    usersId: integer("users_id").references(() => users.id).notNull(),
+    listsId: integer("lists_id").references(() => lists.id).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
   },
   (example) => ({
-    userIdIndex: index("user_item_user_id_idx").on(example.userId),
-    itemIdIndex: index("user_item_item_id_idx").on(example.itemId),
-    uniqueUserItem: unique("user_item_unique_user_item").on(example.userId, example.itemId),
-  })
-);
-
-// UserItems table to manage items shared with users
-export const userLists = createTable(
-  "user_list",
-  {
-    id: serial("id").primaryKey().notNull(),
-    userId: integer("user_id").references(() => users.id).notNull(),
-    listId: integer("list_id").references(() => lists.id).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-  },
-  (example) => ({
-    userIdIndex: index("user_list_user_id_idx").on(example.userId),
-    listIdIndex: index("user_list_list_id_idx").on(example.listId),
-    uniqueUserItem: unique("user_list_unique_user_list").on(example.userId, example.listId),
+    userIdIndex: index("lists_users_user_id_idx").on(example.usersId),
+    listIdIndex: index("lists_users_list_id_idx").on(example.listsId),
+    uniqueUserItem: unique("lists_users_unique_user_list").on(example.usersId, example.listsId),
   })
 );
