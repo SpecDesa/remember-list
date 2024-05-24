@@ -12,7 +12,6 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { ListStatus } from "./types";
 
 /**

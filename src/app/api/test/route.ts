@@ -8,9 +8,12 @@ export const dynamic = "force-dynamic";
 export function POST(request: Request) {
     const requestHeaders = headers();
     const authValue = requestHeaders.get("AuthorizationClerk")
-    console.log("TEST", authValue)
-    console.log("Header;", request.headers)
+    
+    if(process.env.CLERK_WEBHOOK_AUTH_KEY !== authValue){
+        return NextResponse.json({message: "Either route not found or auth invalid"}, {status: 404})
+    }
 
-    console.log(request.body)
+
+    
     return NextResponse.json({ ok: "Ok", body: request.body })
 }

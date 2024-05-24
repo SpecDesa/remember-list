@@ -3,6 +3,7 @@ import { db } from '.'
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { lists, listsUsers, users } from './schema';
 import { eq, sql } from 'drizzle-orm/sql';
+import { ClerkUser } from '~/types/clerk/clerk-user';
 
 export async function getTasks() {
 
@@ -11,6 +12,21 @@ export async function getTasks() {
       });
 
     return items;
+}
+
+
+export async function signUpUser(authObj: ClerkUser){
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const account = authObj?.external_accounts?.[0]
+    if(!account?.id || !account?.email_address || !account?.username){
+        return
+    }
+
+    type NewUser = typeof users.$inferInsert;
+
+
+    const newUser: NewUser = { clerkId: account?.id, email: account?.email_address, username: account?.username};
+    await db.insert(users).values(newUser);
 }
 
 
