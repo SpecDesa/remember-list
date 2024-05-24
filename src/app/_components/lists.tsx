@@ -10,15 +10,12 @@ export const dynamic = "force-dynamic"
 
 
 async function GetAvatar({clerkId}: {clerkId: string}){
-    console.log(clerkId)
    const user = await clerkClient.users.getUser(clerkId)
-   console.log(user.imageUrl)
 
    const firstname = user.firstName?.toLocaleUpperCase() ?? ''; 
    const lastname = user.lastName?.toLocaleUpperCase() ?? ''; 
     const initials = (firstname ? firstname.charAt(0) : '') + (lastname ? lastname.charAt(0) : '');
 
-    console.log(firstname.at(0) + '' + lastname.at(0))
     return (
 
             <Avatar key={clerkId} className="">
