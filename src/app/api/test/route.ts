@@ -2,10 +2,12 @@
 
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
+import { signUpUser } from "~/server/db/queries";
+import type { ClerkUser } from "~/types/clerk/clerk-user";
 export const dynamic = "force-dynamic";
 
 // A faulty API route to test Sentry's error monitoring
-export function POST(request: Request) {
+export async function POST(request: Request) {
     const requestHeaders = headers();
     const authValue = requestHeaders.get("AuthorizationClerk")
     console.log("Gotten value", authValue);
@@ -16,6 +18,7 @@ export function POST(request: Request) {
     }
 
 
+    await signUpUser(request.body as unknown as ClerkUser)
     
     return NextResponse.json({ ok: "Ok", body: request.body })
 }

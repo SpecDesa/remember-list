@@ -26,6 +26,7 @@ export async function signUpUser(authObj: ClerkUser){
 
 
     const newUser: NewUser = { clerkId: account?.id, email: account?.email_address, username: account?.username};
+    console.log("User::", newUser)
     await db.insert(users).values(newUser);
 }
 
@@ -36,8 +37,6 @@ export async function getMyLists() {
     if(!user.userId ) throw new Error("Unauthorized");
 
     const fullUser = await clerkClient.users.getUser(user.userId);
-
-    console.log('fullUser', fullUser)
 
 
     if(!fullUser.emailAddresses[0]?.emailAddress) throw new Error("Couldn't find user in database");
