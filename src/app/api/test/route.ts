@@ -3,6 +3,8 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { signUpUser } from "~/server/db/queries";
+import { env } from "~/env";
+
 import type { ClerkUser } from "~/types/clerk/clerk-user";
 export const dynamic = "force-dynamic";
 
@@ -13,7 +15,7 @@ export async function POST(request: Request) {
     console.log("Gotten value", authValue);
     console.log("Backend Valu", process.env.CLERK_WEBHOOK_AUTH_KEY)
     
-    if(process.env.CLERK_WEBHOOK_AUTH_KEY !== authValue){
+    if( env.CLERK_WEBHOOK_AUTH_KEY !== authValue){
         return NextResponse.json({message: "Either route not found or auth invalid"}, {status: 404})
     }
 
