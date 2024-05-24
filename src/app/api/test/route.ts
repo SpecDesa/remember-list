@@ -19,6 +19,7 @@ export async function POST(request: Request) {
         return NextResponse.json({message: "Either route not found or auth invalid"}, {status: 404})
     }
 
+    console.log("Signing up user")
 
     await signUpUser(request.body as unknown as ClerkUser)
     

@@ -18,13 +18,16 @@ export async function getTasks() {
 export async function signUpUser(authObj: ClerkUser){
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const account = authObj?.external_accounts?.[0]
+
+    console.log("Gotten account", account)
     if(!account?.id || !account?.email_address || !account?.username){
+        console.log("Something missing, return udnefined")
         return
     }
 
     type NewUser = typeof users.$inferInsert;
 
-
+    console.log("Creating new user")
     const newUser: NewUser = { clerkId: account?.id, email: account?.email_address, username: account?.username};
     console.log("User::", newUser)
     await db.insert(users).values(newUser);
