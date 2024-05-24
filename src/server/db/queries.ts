@@ -37,6 +37,7 @@ export async function getMyLists() {
 
     const fullUser = await clerkClient.users.getUser(user.userId);
 
+    console.log('fullUser', fullUser)
 
 
     if(!fullUser.emailAddresses[0]?.emailAddress) throw new Error("Couldn't find user in database");
