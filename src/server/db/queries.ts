@@ -1,8 +1,8 @@
 import 'server-only'
 import { db } from '.'
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { lists, listsUsers, users, usersLists } from './schema';
-import { eq } from 'drizzle-orm/sql';
+import { lists, listsUsers, users } from './schema';
+import { eq, sql } from 'drizzle-orm/sql';
 
 export async function getTasks() {
 
@@ -21,6 +21,8 @@ export async function getMyLists() {
 
     const fullUser = await clerkClient.users.getUser(user.userId);
 
+
+
     if(!fullUser.emailAddresses[0]?.emailAddress) throw new Error("Couldn't find user in database");
     // Somehow get userid == 1 e.g.
     //
@@ -31,18 +33,51 @@ export async function getMyLists() {
 
     if(!userDbObj?.id) throw new Error("No user id gotten from mail");
 
-    const result = await db.select({lists: lists}).from(lists)
-        .innerJoin(listsUsers, eq(listsUsers.listsId, lists.id ))
-        .innerJoin(users, eq(listsUsers.usersId, users.id))
-        .where(eq(users.id, userDbObj?.id))
 
-    console.log("result", result) 
-    return result
-     
-//     const items = await db.query.lists.findMany({
-//         where:(model, {eq}) => eq(model.userId, user.userId),
-//         // orderBy: (model, {desc}) => desc(model.id),  // Make newest come first. maybe lowest quantity first.  
-//       });
-// 
-//     return items;
+    // Get lists that user is part of.
+    const userLists = await db.select({
+        listId: lists.id,
+        listName: lists.name,
+        listType: lists.type,
+    })
+    .from(lists)
+    .innerJoin(listsUsers, eq(listsUsers.listsId, lists.id))
+    .where(eq(listsUsers.usersId, userDbObj.id));
+
+    // If no list, return empty
+     if (userLists.length === 0) {
+        return []; // No lists found for the user
+    }
+
+
+    // Get all ids of lists, to later get other users also in lists
+    const listIds = userLists.map(userList => userList.listId);
+
+
+    // Define an interface for the result type
+    interface RelatedUser {
+        name: string;
+        ids: string[]; // Define type for userEmail as string array
+    }
+
+    // Get related users and list names.
+    const relatedUsers = await db.select({
+        name: lists.name,
+        ids: sql`array_agg(${users.clerkId})`    
+        
+    })
+    .from(users)
+    .innerJoin(listsUsers, eq(listsUsers.usersId, users.id))
+    .innerJoin(lists, eq(listsUsers.listsId, lists.id))
+    .where(sql`${listsUsers.listsId} in ${listIds}`)
+    .groupBy((t) => [t.name]); // Group by both list ID and list name
+    
+    // Perform type assertion for userEmail
+    const typedRelatedUsers: RelatedUser[] = relatedUsers.map((user) => ({
+        name: user.name!,
+        ids: user.ids as string[]
+    }));
+
+    return typedRelatedUsers 
+
 }

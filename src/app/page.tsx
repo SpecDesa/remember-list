@@ -1,9 +1,4 @@
 import { SignedIn, SignedOut } from "@clerk/nextjs";
-import { ScrollArea } from "~/components/ui/scroll-area";
-import { Separator } from "~/components/ui/separator";
-import { getTasks } from "~/server/db/queries";
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
-import { Button } from "~/components/ui/button";
 import Lists from "./_components/lists";
 
 export const dynamic = "force-dynamic"
