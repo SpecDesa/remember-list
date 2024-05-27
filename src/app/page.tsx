@@ -1,5 +1,5 @@
 import { SignedIn, SignedOut } from "@clerk/nextjs";
-import Lists from "./_components/lists";
+import Lists from "./_components/lists-server";
 
 export const dynamic = "force-dynamic"
 

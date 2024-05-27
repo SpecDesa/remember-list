@@ -1,13 +1,16 @@
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { getMyLists } from "~/server/db/queries";
-import { Button } from "~/components/ui/button";
+import { type RelatedUser} from "~/server/db/queries";
 import GetAvatar from "./get-avatar";
-
+import { URLS } from "../_urls/urls";
+import GoToButton from "./go-to-button";
+import { type FC } from "react";
 export const dynamic = "force-dynamic";
 
-export default async function Lists() {
-  const lists = await getMyLists();
+interface ListsClientProps {
+  lists: RelatedUser[];
+}
 
+const ListsClient: FC<ListsClientProps> = ({ lists }) => {
   return (
     <div className="h-[80vh] flex-row">
       <h2 className="mb-2 ms-8 mt-2 flex text-2xl">Dine Lister</h2>
@@ -40,8 +43,9 @@ export default async function Lists() {
         </ScrollArea>
       </div>
       <div className=" flex flex-wrap justify-center gap-4">
-        <Button className="mt-4">Tilføj ny liste</Button>
+        <GoToButton text="Tilføj ny liste" url={URLS.LISTS} />
       </div>
     </div>
   );
-}
+};
+export default ListsClient;

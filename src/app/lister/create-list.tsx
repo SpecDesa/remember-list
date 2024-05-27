@@ -30,8 +30,20 @@ export default function CreateList(){
       const defaultTextFormat = 'text-center justify-center';
       
       // wont fire if form invalid, because of z setup with forms.
-      const handleSubmit = (values: z.infer<typeof formSchema>) => {
+      const handleSubmit = async (values: z.infer<typeof formSchema>) => {
         console.log("asd", values)
+
+        const res = await fetch('/api/lists', {
+          method: 'POST',
+          headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+
+        })
+      console.log('res', await res.json())
+
+        
       }
 
       return (
