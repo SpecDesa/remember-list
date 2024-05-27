@@ -1,10 +1,10 @@
 import "server-only";
 import { db } from ".";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { items, lists, listsUsers, users } from "./schema";
+import { items, lists, listsRelationships, listsUsers, users } from "./schema";
 import { eq, sql } from "drizzle-orm/sql";
 import type { UserSignup, UserDeleted } from "~/types/clerk/clerk-user";
-import { ListStatus } from "./types";
+import { type ListStatus } from "./types";
 
 export interface RelatedUser {
   name: string;
@@ -45,14 +45,16 @@ export async function deleteUser(deleteObj: UserDeleted) {
       .returning({ listIds: listsUsers.listsId });
 
     for (const listId of listIds) {
+      console.log("want to delete:", listId.listIds)
       const listLeft = await tx
         .select()
         .from(listsUsers)
         .where(eq(listsUsers.listsId, Number(listId.listIds)));
+      
 
       if (listLeft.length === 0) {
+        await tx.delete(listsRelationships).where(eq(listsRelationships.childListId, listId.listIds));
         await tx.delete(items).where(eq(items.listsId, listId.listIds));
-
         await tx.delete(lists).where(eq(lists.id, Number(listId.listIds)));
       }
     }

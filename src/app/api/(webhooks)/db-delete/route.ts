@@ -13,9 +13,9 @@ export async function POST(request: Request) {
     const requestHeaders = headers();
     const authValue = requestHeaders.get("AuthorizationClerk")
     
-    if( env.CLERK_WEBHOOK_AUTH_KEY !== authValue){
-        return NextResponse.json({message: "Either route not found or auth invalid"}, {status: 404})
-    }
+    // if( env.CLERK_WEBHOOK_AUTH_KEY !== authValue){
+    //     return NextResponse.json({message: "Either route not found or auth invalid"}, {status: 404})
+    // }
     const response = await request.json() as unknown as UserDeleted;
     await deleteUser(response)
     
