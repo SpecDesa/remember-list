@@ -25,15 +25,12 @@ export async function deleteUser(deleteObj: UserDeleted){
         .select()
         .from(users)
         .where(eq(users.clerkId, userAuthId));
-      console.log("Get dbUsers", dbUsers);
 
       // user from db.
       const user = dbUsers?.at(0);
-      console.log("Get user at 0", user);
 
       // If user not found, return. Something went wrong
       if (!user) {
-        console.log("no user found, return");
         return;
       }
 
@@ -43,22 +40,18 @@ export async function deleteUser(deleteObj: UserDeleted){
         .where(eq(listsUsers.usersId, user.id))
         .returning({ listIds: listsUsers.listsId });
 
-      console.log("listIds", listIds)
     
       for (const listId of listIds) {
-        console.log("ListId: ", listId);
-        console.log("ListId specific: ", listId.listIds);
         const listLeft = await tx
           .select()
           .from(listsUsers)
           .where(eq(listsUsers.listsId, Number(listId.listIds)));
 
-        console.log("checking if listLeft lenght", listLeft.length)
         if (listLeft.length === 0) {
 
-          console.log("Deleting items first");
+
           await tx.delete(items).where(eq(items.listsId, listId.listIds));
-          console.log("Deleting");
+
           await tx.delete(lists).where(eq(lists.id, Number(listId.listIds)));
         }
       }
@@ -76,17 +69,12 @@ export async function signUpUser(authObj: UserSignup){
     const firstName = data?.external_accounts?.[0]?.first_name;
     
     if(!accountId || !email || !firstName){
-        console.log("Something missing, return udnefined")
         return
     }
 
     type NewUser = typeof users.$inferInsert;
-
-    console.log("Creating new user")
-    const newUser: NewUser = { clerkId: accountId, email: email, username: firstName};
-    console.log("User::", newUser)
-    const response = await db.insert(users).values(newUser);
-    console.log("Inserted?", response)
+    const newUser: NewUser = { clerkId: accountId, email: email, username: firstName}
+    const response = await db.insert(users).values(newUser)
 }
 
 
