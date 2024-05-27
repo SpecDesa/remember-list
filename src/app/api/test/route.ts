@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     }
 
     console.log("Signing up user")
-
+    console.log("USER DETIALS:", request.body)
     await signUpUser(request.body as unknown as ClerkUser)
     
     return NextResponse.json({ ok: "Ok", body: request.body })
