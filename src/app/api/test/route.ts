@@ -18,10 +18,10 @@ export async function POST(request: Request) {
     if( env.CLERK_WEBHOOK_AUTH_KEY !== authValue){
         return NextResponse.json({message: "Either route not found or auth invalid"}, {status: 404})
     }
-
+    const response = await request.json() as unknown as ClerkUser;
     console.log("Signing up user")
-    console.log("USER DETIALS:", request.json())
-    await signUpUser(request.body as unknown as ClerkUser)
+    console.log("USER DETIALS:", response)
+    await signUpUser(response)
     
     return NextResponse.json({ ok: "Ok", body: request.body })
 }
