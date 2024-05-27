@@ -50,7 +50,11 @@ export async function getMyLists() {
         where: (model, {eq}) => eq(model.email || '', fullUser.emailAddresses[0]!.emailAddress ) 
     })
 
-    if(!userDbObj?.id) throw new Error("No user id gotten from mail");
+    // Do not throw, but handle maybe deleted user?
+    if(!userDbObj?.id) {
+        // throw new Error("No user id gotten from mail");
+        return []
+    }
 
 
     // Get lists that user is part of.
