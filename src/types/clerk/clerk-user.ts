@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export interface ClerkUser {
+export interface UserSignup{
   data: {
     backup_code_enabled?: boolean;
     banned?: boolean;
@@ -78,4 +78,15 @@ export interface ClerkUser {
     verification_attempts_remaining?: number;
     web3_wallets?: any[];
   };
+}
+
+
+export type UserDeleted = {
+    "data": {
+        "deleted": boolean,
+        "id": string,
+        "object": any
+    },
+    "object": string,
+    "type": string
 }

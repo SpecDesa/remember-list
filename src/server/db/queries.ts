@@ -1,9 +1,9 @@
 import 'server-only'
 import { db } from '.'
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { lists, listsUsers, users } from './schema';
+import { items, lists, listsUsers, users } from './schema';
 import { eq, sql } from 'drizzle-orm/sql';
-import { ClerkUser } from '~/types/clerk/clerk-user';
+import type { UserSignup, UserDeleted } from '~/types/clerk/clerk-user';
 
 export async function getTasks() {
 
@@ -15,7 +15,60 @@ export async function getTasks() {
 }
 
 
-export async function signUpUser(authObj: ClerkUser){
+export async function deleteUser(deleteObj: UserDeleted){
+    const userAuthId = deleteObj?.data?.id;
+
+    // Start a transaction
+    await db.transaction(async (tx) => {
+      // Get db userid
+      const dbUsers = await tx
+        .select()
+        .from(users)
+        .where(eq(users.clerkId, userAuthId));
+      console.log("Get dbUsers", dbUsers);
+
+      // user from db.
+      const user = dbUsers?.at(0);
+      console.log("Get user at 0", user);
+
+      // If user not found, return. Something went wrong
+      if (!user) {
+        console.log("no user found, return");
+        return;
+      }
+
+      // Delete entries from lists_users where usersId matches the userId
+      const listIds = await tx
+        .delete(listsUsers)
+        .where(eq(listsUsers.usersId, user.id))
+        .returning({ listIds: listsUsers.listsId });
+
+      console.log("listIds", listIds)
+    
+      for (const listId of listIds) {
+        console.log("ListId: ", listId);
+        console.log("ListId specific: ", listId.listIds);
+        const listLeft = await tx
+          .select()
+          .from(listsUsers)
+          .where(eq(listsUsers.listsId, Number(listId.listIds)));
+
+        console.log("checking if listLeft lenght", listLeft.length)
+        if (listLeft.length === 0) {
+
+          console.log("Deleting items first");
+          await tx.delete(items).where(eq(items.listsId, listId.listIds));
+          console.log("Deleting");
+          await tx.delete(lists).where(eq(lists.id, Number(listId.listIds)));
+        }
+      }
+      // Delete the user from users table
+      await tx.delete(users).where(eq(users.id, user.id));
+    });
+
+}
+
+export async function signUpUser(authObj: UserSignup){
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const data = authObj?.data
     const accountId = data?.id;
