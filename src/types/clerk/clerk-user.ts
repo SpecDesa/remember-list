@@ -1,52 +1,53 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface ClerkUser {
+  data: {
     backup_code_enabled?: boolean;
     banned?: boolean;
     create_organization_enabled?: boolean;
     created_at?: number;
     delete_self_enabled?: boolean;
     email_addresses?: {
-        created_at?: number;
-        email_address?: string;
+      created_at?: number;
+      email_address?: string;
+      id?: string;
+      linked_to?: {
         id?: string;
-        linked_to?: {
-            id?: string;
-            type?: string;
-        }[];
-        object?: string;
-        reserved?: boolean;
-        updated_at?: number;
-        verification?: {
-            attempts?: number | null;
-            expire_at?: number | null;
-            status?: string;
-            strategy?: string;
-        };
+        type?: string;
+      }[];
+      object?: string;
+      reserved?: boolean;
+      updated_at?: number;
+      verification?: {
+        attempts?: number | null;
+        expire_at?: number | null;
+        status?: string;
+        strategy?: string;
+      };
     }[];
     external_accounts?: {
-        approved_scopes?: string;
-        avatar_url?: string;
-        created_at?: number;
-        email_address?: string;
-        first_name?: string;
-        id?: string;
-        identification_id?: string;
-        image_url?: string;
-        label?: string | null;
-        last_name?: string;
-        object?: string;
-        provider?: string;
-        provider_user_id?: string;
-        public_metadata?: {};
-        updated_at?: number;
-        username?: string;
-        verification?: {
-            attempts?: number | null;
-            expire_at?: number;
-            status?: string;
-            strategy?: string;
-        };
+      approved_scopes?: string;
+      avatar_url?: string;
+      created_at?: number;
+      email_address?: string;
+      first_name?: string;
+      id?: string;
+      identification_id?: string;
+      image_url?: string;
+      label?: string | null;
+      last_name?: string;
+      object?: string;
+      provider?: string;
+      provider_user_id?: string;
+      public_metadata?: {};
+      updated_at?: number;
+      username?: string;
+      verification?: {
+        attempts?: number | null;
+        expire_at?: number;
+        status?: string;
+        strategy?: string;
+      };
     }[];
     external_id?: string | null;
     first_name?: string | null;
@@ -76,4 +77,5 @@ export interface ClerkUser {
     username?: string;
     verification_attempts_remaining?: number;
     web3_wallets?: any[];
+  };
 }
