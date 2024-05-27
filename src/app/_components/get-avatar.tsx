@@ -1,0 +1,19 @@
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { clerkClient } from "@clerk/nextjs/server";
+
+export default async function GetAvatar({ clerkId }: { clerkId: string }) {
+  const user = await clerkClient.users.getUser(clerkId);
+
+  const firstname = user.firstName?.toLocaleUpperCase() ?? "";
+  const lastname = user.lastName?.toLocaleUpperCase() ?? "";
+  const initials =
+    (firstname ? firstname.charAt(0) : "") +
+    (lastname ? lastname.charAt(0) : "");
+
+  return (
+    <Avatar key={clerkId} className="">
+      <AvatarImage src={user.imageUrl || ""} />
+      <AvatarFallback>{initials}</AvatarFallback>
+    </Avatar>
+  );
+}

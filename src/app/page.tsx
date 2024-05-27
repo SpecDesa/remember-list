@@ -13,16 +13,15 @@ export const dynamic = "force-dynamic"
 
 export default async function HomePage() {
     return (
-            <main className="">
-            <SignedOut>
-            <div className="w-full h-full text-2xl text-center">
+      <main className="">
+        <SignedOut>
+          <div className="h-full w-full text-center text-2xl">
             Please sign in above
-            </div>
-            </SignedOut>
-            <SignedIn>
-            <Lists />
-            </SignedIn>
-
-            </main>
-           );
+          </div>
+        </SignedOut>
+        <SignedIn>
+          <Lists />
+        </SignedIn>
+      </main>
+    );
 }

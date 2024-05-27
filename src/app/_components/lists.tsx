@@ -1,67 +1,47 @@
-
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { getMyLists, getTasks } from "~/server/db/queries";
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar'
+import { getMyLists } from "~/server/db/queries";
 import { Button } from "~/components/ui/button";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import GetAvatar from "./get-avatar";
 
-export const dynamic = "force-dynamic"
-
-
-
-async function GetAvatar({clerkId}: {clerkId: string}){
-   const user = await clerkClient.users.getUser(clerkId)
-
-   const firstname = user.firstName?.toLocaleUpperCase() ?? ''; 
-   const lastname = user.lastName?.toLocaleUpperCase() ?? ''; 
-    const initials = (firstname ? firstname.charAt(0) : '') + (lastname ? lastname.charAt(0) : '');
-
-    return (
-
-            <Avatar key={clerkId} className="">
-            <AvatarImage src={user.imageUrl || '' } />
-            <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-           )
-}
+export const dynamic = "force-dynamic";
 
 export default async function Lists() {
-    const lists = await getMyLists();
+  const lists = await getMyLists();
 
-    return (
-                <div className="flex-row h-[80vh]">
-                <h2 className="flex ms-8 mt-2 mb-2 text-2xl">Lister</h2>
-                <div className="flex flex-wrap justify-center gap-4">
-                <ScrollArea className="h-[480px] md:h-[700px] md:w-2/3 w-5/6 rounded-md gap-4">
-                <div className="p-4 flex flex-col gap-1">
-                {lists.map((list, idx) => (
-                            <div key={idx + '_outer'} className="bg-white mb-4 shadow-3xl 
-                            transform hover:translate-y-1 transition-all 
-                            duration-300 md:hover:bg-gray-300 hover:cursor-pointer">
-                            <div className="flex justify-between 
-                            text-black text-sm text-center mx-2">
-                            <div className="">
-                            {list.name}
-                            </div>
-                            <div className=" ">1/1</div>
-                            <div className=" ">...</div>
-                            </div>
-                            <div className="flex items-center mx-2 space-x-[-20px]">
-                                {list.ids?.map(async (id, idx) => {
-                                        return <GetAvatar key={`${idx}_${id}`} clerkId={id}/>
-                                    })}
-
-                            </div>
-                            </div>
-                            ))}
-    </div>
+  return (
+    <div className="h-[80vh] flex-row">
+      <h2 className="mb-2 ms-8 mt-2 flex text-2xl">Dine Lister</h2>
+      <div className="flex flex-wrap justify-center gap-4">
+        <ScrollArea className="h-[380px] w-5/6 gap-4 rounded-md md:h-[600px] md:w-2/3">
+          <div className="flex flex-col gap-1 p-4">
+            {lists.map((list, idx) => (
+              <div
+                key={idx + "_outer"}
+                className="shadow-3xl mb-4 transform 
+                            bg-white transition-all duration-300 
+                            hover:translate-y-1 hover:cursor-pointer md:hover:bg-gray-300"
+              >
+                <div
+                  className="mx-2 flex 
+                            justify-between text-center text-sm text-black"
+                >
+                  <div className="">{list.name}</div>
+                  <div className=" ">1/1</div>
+                  <div className=" ">...</div>
+                </div>
+                <div className="mx-2 flex items-center space-x-[-20px]">
+                  {list.ids?.map(async (id, idx) => {
+                    return <GetAvatar key={`${idx}_${id}`} clerkId={id} />;
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
         </ScrollArea>
-        </div>
-        <div className=" flex flex-wrap justify-center gap-4">
-        <Button className="mt-4" >
-        Tilføj ny liste</Button>
-        </div>
-        </div>
-        )
+      </div>
+      <div className=" flex flex-wrap justify-center gap-4">
+        <Button className="mt-4">Tilføj ny liste</Button>
+      </div>
+    </div>
+  );
 }
-
