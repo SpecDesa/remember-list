@@ -18,7 +18,7 @@ export async function getTasks() {
 export async function signUpUser(authObj: ClerkUser){
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const data = authObj?.data
-    const accountId = data?.external_accounts?.[0]?.id;
+    const accountId = data?.id;
     const email = data?.external_accounts?.[0]?.email_address;
     const firstName = data?.external_accounts?.[0]?.first_name;
     
