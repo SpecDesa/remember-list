@@ -45,7 +45,6 @@ export async function deleteUser(deleteObj: UserDeleted) {
       .returning({ listIds: listsUsers.listsId });
 
     for (const listId of listIds) {
-      console.log("want to delete:", listId.listIds)
       const listLeft = await tx
         .select()
         .from(listsUsers)
