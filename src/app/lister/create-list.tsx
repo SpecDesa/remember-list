@@ -8,7 +8,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
-
+import { useRouter } from 'next/navigation';
+import { URLS } from '../_urls/urls';
 
 
 const formSchema = z.object({
@@ -17,6 +18,8 @@ const formSchema = z.object({
 })
 
 export default function CreateList(){
+      const router = useRouter();
+
       const form = useForm<z.infer<typeof formSchema>>({
         // Take formschema and map schema and zod, so it is connected.
         resolver: zodResolver(formSchema),
@@ -31,8 +34,6 @@ export default function CreateList(){
       
       // wont fire if form invalid, because of z setup with forms.
       const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-        console.log("asd", values)
-
         const res = await fetch('/api/lists', {
           method: 'POST',
           headers: {
@@ -41,8 +42,13 @@ export default function CreateList(){
         body: JSON.stringify(values),
 
         })
-      console.log('res', await res.json())
-
+        
+        if(res.status !== 200){
+                console.error("Error when creating list")
+                return; 
+            }
+        
+        return router.push(URLS.HOME) 
         
       }
 
