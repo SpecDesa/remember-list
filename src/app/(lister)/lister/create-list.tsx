@@ -9,7 +9,7 @@ import { Input } from '~/components/ui/input';
 import { Button } from '~/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select';
 import { useRouter } from 'next/navigation';
-import { URLS } from '../_urls/urls';
+import { URLS } from '../../_urls/urls';
 
 
 const formSchema = z.object({

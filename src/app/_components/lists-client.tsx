@@ -43,7 +43,7 @@ const ListsClient: FC<ListsClientProps> = ({ lists }) => {
         </ScrollArea>
       </div>
       <div className=" flex flex-wrap justify-center gap-4">
-        <GoToButton text="Tilføj ny liste" url={URLS.LISTS} />
+        <GoToButton text="Tilføj ny liste" url={`${URLS.LISTS}?action=create`} />
       </div>
     </div>
   );

@@ -4,16 +4,18 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { items, lists, listsRelationships, listsUsers, users } from "./schema";
 import { eq, sql } from "drizzle-orm/sql";
 import type { UserSignup, UserDeleted } from "~/types/clerk/clerk-user";
-import { type ListStatus } from "./types";
+import { ItemType, type ListStatus } from "./types";
 
 export interface RelatedUser {
   name: string;
   ids: string[]; // Define type for userEmail as string array
 }
 
-export async function getTasks() {
-  const items = await db.query.items.findMany({
+export async function getItems(listId: number) {
+
+  const items: ItemType[] = await db.query.items.findMany({
     orderBy: (model, { desc }) => desc(model.id), // Make newest come first. maybe lowest quantity first.
+    where: (model, {eq}) => eq(model.listsId, listId ) 
   });
 
   return items;

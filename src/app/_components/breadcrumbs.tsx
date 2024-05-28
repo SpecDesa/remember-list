@@ -14,6 +14,8 @@ const Breadcrumbs = () => {
   const paths = usePathname();
   const pathNames = paths.split("/").filter((path) => path);
 
+  console.log('pathNames', pathNames)
+
   return (
     <div className="hidden md:inline-flex">
       <Breadcrumb>
@@ -33,7 +35,7 @@ const Breadcrumbs = () => {
               <React.Fragment key={`${index}_${link}`}>
                 {index < pathNames.length - 1 ? (
                   <BreadcrumbItem>
-                    <BreadcrumbLink href={`${link}`}>{link}</BreadcrumbLink>
+                    <BreadcrumbLink href={`/${link}`}>{link}</BreadcrumbLink>
                   </BreadcrumbItem>
                 ) : (
                   <BreadcrumbItem>
