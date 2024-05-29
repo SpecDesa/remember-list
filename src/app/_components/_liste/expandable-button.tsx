@@ -29,9 +29,8 @@ const ExpandableButton: React.FC<ExpandableButtonProps> = ({
     }
 
     const newTimeoutId = setTimeout(() => {
-      console.log("Delayed for 1 second.");
       setExpanded(false);
-    }, 2000);
+    }, 1250);
 
     setTimeoutId(newTimeoutId);
   };
@@ -46,7 +45,7 @@ const ExpandableButton: React.FC<ExpandableButtonProps> = ({
   }, [timeoutId, expanded]);
 
   return (
-    <div>
+    <div className="">
       <Button
         variant={"default"}
         className={`flex rounded-full ${expanded ? "hidden" : ""}`}

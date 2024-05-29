@@ -10,7 +10,7 @@ export interface Item {
 // Define the interface for the item slice
 export interface ItemSlice {
   items: Item[];
-  addItem: (name: string) => void;
+  addItem: (name: string, quantity: number) => void;
   removeItem: (id: string) => void;
   increaseQuantity: (id: string) => void;
   decreaseQuantity: (id: string) => void;
@@ -25,10 +25,10 @@ export const createItemSlice: StateCreator<
 > = (set) => ({
   items: [],
 
-  addItem: (name: string) => set((state) => ({
+  addItem: (name: string, quantity: number) => set((state) => ({
     items: [
       ...state.items,
-      { id: `${Date.now()}_${name}`, name, quantity: 1, isBought: false },
+      { id: `${Date.now()}_${name}`, name, quantity: quantity, isBought: false },
     ],
   })),
 

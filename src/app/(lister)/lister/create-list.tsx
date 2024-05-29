@@ -24,7 +24,7 @@ export default function CreateList(){
         // Take formschema and map schema and zod, so it is connected.
         resolver: zodResolver(formSchema),
         defaultValues: {
-          name:"",
+          name: undefined,
           type: ListStatus.STOCKING,
         }
       });

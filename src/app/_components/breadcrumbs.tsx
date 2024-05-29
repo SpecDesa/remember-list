@@ -14,8 +14,6 @@ const Breadcrumbs = () => {
   const paths = usePathname();
   const pathNames = paths.split("/").filter((path) => path);
 
-  console.log('pathNames', pathNames)
-
   return (
     <div className="hidden md:inline-flex">
       <Breadcrumb>

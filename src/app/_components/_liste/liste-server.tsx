@@ -1,17 +1,19 @@
 "use server";
 // ListeServer.tsx
-import { getItems } from '~/server/db/queries';
+import { getItems, updateItemQuantity } from '~/server/db/queries';
 
 interface ListeServerProps {
   listId: number;
 }
 
-export default async function ListeServer({listId}: ListeServerProps) {
+export const getItemsFromList = async ({listId}: ListeServerProps) => {
     const items = await getItems(listId)
-    console.log("Items", items)
-// }
-    // console.log(items)
 
   return items
 };
+
+export const updateItemFromList = async ({id, quantity}: {id: number, quantity: number}) => {
+  void updateItemQuantity(id,quantity);
+};
+
 

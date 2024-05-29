@@ -3,6 +3,7 @@
 
 import { sql } from "drizzle-orm";
 import {
+  check,
   index,
   integer,
   pgTableCreator,
@@ -28,11 +29,28 @@ export const lists = createTable(
   {
     id: serial("id").primaryKey().notNull(),
 //     userId: varchar("user_id", {length: 1024}).notNull(),
-    name: varchar("name", {length: 1024}),
+    name: varchar("name", {length: 1024}).notNull(),
     // parentId: integer("parent_id").references((): AnyPgColumn => lists.id),
     type: varchar("type", {length: 256 }).default(ListStatus.STOCKING).notNull(),
   }
 )
+
+// Define a function to add the check constraint
+// async function addCheckConstraint() {
+//   try {
+//     // Execute raw SQL query to add the check constraint
+//     sql`
+//       ALTER TABLE lists
+//       ADD CONSTRAINT check_name_not_empty CHECK (name <> '');
+//     `;
+//     console.log("Check constraint added successfully.");
+//   } catch (error) {
+//     console.error("Error adding check constraint:", error);
+//   }
+// }
+
+// // Call the function to add the check constraint
+// void addCheckConstraint();
 
 export const listsRelationships = createTable(
   "lists_relationships",

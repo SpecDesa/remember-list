@@ -4,11 +4,14 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { items, lists, listsRelationships, listsUsers, users } from "./schema";
 import { eq, sql } from "drizzle-orm/sql";
 import type { UserSignup, UserDeleted } from "~/types/clerk/clerk-user";
-import { ItemType, type ListStatus } from "./types";
+import { type ItemType, type ListStatus } from "./types";
 
 export interface RelatedUser {
+  avatars?: {clerkId: string, imageUrl:string, initials: string}[];
   name: string;
   ids: string[]; // Define type for userEmail as string array
+  listId: number;
+  listType: string;
 }
 
 export async function getItems(listId: number) {
@@ -19,6 +22,44 @@ export async function getItems(listId: number) {
   });
 
   return items;
+}
+
+export async function updateItemQuantity(itemId: number, quantity: number){
+  const user = auth();
+  if (!user.userId) throw new Error("Unauthorized");
+
+  const userDbObj = await getDBUserId(user.userId);
+
+  if (!userDbObj?.id) {
+    return [];
+  }
+
+  await db.transaction(async (tx) => {
+    // Get listsId from item
+    const dbItem = await tx.query.items.findFirst({
+      where: (model, { eq }) => eq(model.id, itemId),
+    });
+
+    if(!dbItem?.id){
+      console.error(`Could not find list that item to update belonged to. itemId: ${itemId}, dbItem id: ${dbItem?.id}`)
+      return
+    }
+    // find entry in listsusers where userId and listsid is there
+    const userAllowedToUpdate = await tx.query.listsUsers.findFirst({
+      where: (model, {eq, and}) => and(eq(model.usersId, userDbObj.id), eq(model.listsId, dbItem.listsId) )
+    });
+
+    if(!userAllowedToUpdate){
+      console.error(`User ${userDbObj.id} is not allowed to update item with id: ${itemId}`)
+      return 
+    }
+    // Future check role of user (viewer, admin, executor, etc..)
+
+    // update quantity
+    await tx.update(items).set({quantity: quantity}).where(eq(items.id, itemId)).returning();
+  });
+
+
 }
 
 export async function deleteUser(deleteObj: UserDeleted) {
@@ -175,17 +216,21 @@ export async function getMyLists() {
     .select({
       name: lists.name,
       ids: sql`array_agg(${users.clerkId})`,
+      listId: lists.id,
+      listType: lists.type,
     })
     .from(users)
     .innerJoin(listsUsers, eq(listsUsers.usersId, users.id))
     .innerJoin(lists, eq(listsUsers.listsId, lists.id))
     .where(sql`${listsUsers.listsId} in ${listIds}`)
-    .groupBy((t) => [t.name]); // Group by both list ID and list name
+    .groupBy((t) => [t.name, t.listId, t.listType]); 
 
   // Perform type assertion for userEmail
   const typedRelatedUsers: RelatedUser[] = relatedUsers.map((user) => ({
     name: user.name!,
     ids: user.ids as string[],
+    listId: user.listId,
+    listType: user.listType
   }));
 
   return typedRelatedUsers;

@@ -1,31 +1,31 @@
 'use client';
 import CreateList from "./create-list";
 import { useSearchParams, useRouter } from "next/navigation";
-enum Action {
+export enum ListAction {
     Create = 'create',
-    View = 'view'
+    View = 'view',
+    Buy = 'buy'
 
 } 
 
 export default  function ListPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const action = searchParams.get('action') as Action;
+    const action = searchParams.get('action') as ListAction;
     
-    console.log("action", action, action === Action.Create)
     if(!action || action === null){
         return router.back();
     }
 
-    if(!Object.values(Action).includes(action)){
+    if(!Object.values(ListAction).includes(action)){
         return router.back();
     }
 
     return (<div>
-        {action === Action.Create &&
+        {action === ListAction.Create &&
         <CreateList />
         }
-        {action !== Action.Create &&
+        {action !== ListAction.Create &&
         <div>123</div>
         }
     </div>)
