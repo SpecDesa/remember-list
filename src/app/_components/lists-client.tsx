@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState, type FC } from "react";
 import { useRouter } from "next/navigation";
 import { ListStatus } from "~/server/db/types";
 import { ListAction } from "../(lister)/lister/page";
-import SwipeableDiv from "./swipeable";
+import Swipeable from "./swipeable";
 import { Button } from "~/components/ui/button";
 export const dynamic = "force-dynamic";
 
@@ -66,7 +66,7 @@ const ListsClient: FC<ListsClientProps> = ({ lists }) => {
             {lists.map((list, idx) => (
               <div key={idx + "_outer"} className="flex flex-row">
                 
-              <SwipeableDiv key={idx + "_outer"} 
+              <Swipeable key={idx + "_outer"} 
               deleteButton={<Button variant={"destructive"} className="w-3/4 h-full">Delete</Button>}
               >
               <div
@@ -102,7 +102,7 @@ const ListsClient: FC<ListsClientProps> = ({ lists }) => {
                   })}
                 </div>
               </div>
-              </SwipeableDiv>
+              </Swipeable>
               {/* {deleteElements[idx]} */}
               </div>
             )
