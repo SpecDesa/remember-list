@@ -4,10 +4,12 @@ import { type RelatedUser} from "~/server/db/queries";
 import GetAvatar from "./get-avatar";
 import { URLS } from "../_urls/urls";
 import GoToButton from "./go-to-button";
-import { useEffect, useState, type FC } from "react";
+import { useCallback, useEffect, useMemo, useState, type FC } from "react";
 import { useRouter } from "next/navigation";
 import { ListStatus } from "~/server/db/types";
 import { ListAction } from "../(lister)/lister/page";
+import SwipeableDiv from "./swipeable";
+import { Button } from "~/components/ui/button";
 export const dynamic = "force-dynamic";
 
 interface ListsClientProps {
@@ -16,7 +18,33 @@ interface ListsClientProps {
 
 const ListsClient: FC<ListsClientProps> = ({ lists }) => {
   const [isMounted, setIsMounted] = useState(false);
+  const [showDelete, setShowDelete] = useState<{index?: number, showDelete: boolean }>({index: undefined, showDelete: false});
+
   const router = useRouter();
+  // Memoize JSX elements dependent on showDelete state
+  // const deleteElements = useMemo(() => {
+  //   return lists.map((list, idx) => {
+  //     return (
+  //       showDelete.showDelete && showDelete.index === idx && (
+  //         <div key={idx + "_delete"}>123</div>
+  //       )
+  //     );
+  //   });
+  // }, [lists, showDelete]);
+
+      // Memoize the signalPartialLeftSwipe function
+  const handlePartialLeftSwipe = useCallback(
+    (idx: number) => {
+      setShowDelete((prev) => ({
+        ...prev,
+        showDelete: !prev.showDelete,
+        index: idx,
+      }));
+    },
+    [setShowDelete]
+  );
+
+
       // This is a side effect that runs after the first render and sets the isMounted state to true
       useEffect(() => {
         setIsMounted(true);
@@ -26,7 +54,7 @@ const ListsClient: FC<ListsClientProps> = ({ lists }) => {
     if (!isMounted) {
         return null;
     }
-  
+
 
   
   return (
@@ -36,9 +64,13 @@ const ListsClient: FC<ListsClientProps> = ({ lists }) => {
         <ScrollArea className="h-[380px] w-5/6 gap-4 rounded-md md:h-[600px] md:w-2/3">
           <div className="flex flex-col gap-1 p-4">
             {lists.map((list, idx) => (
+              <div key={idx + "_outer"} className="flex flex-row">
+                
+              <SwipeableDiv key={idx + "_outer"} 
+              deleteButton={<Button variant={"destructive"} className="w-3/4 h-full">Delete</Button>}
+              >
               <div
-                key={idx + "_outer"}
-                className="shadow-3xl mb-4 transform 
+                className="shadow-3xl  transform 
                             bg-white transition-all duration-300 
                             hover:translate-y-1 hover:cursor-pointer md:hover:bg-gray-300"
                 onClick={() => {
@@ -70,7 +102,12 @@ const ListsClient: FC<ListsClientProps> = ({ lists }) => {
                   })}
                 </div>
               </div>
-            ))}
+              </SwipeableDiv>
+              {/* {deleteElements[idx]} */}
+              </div>
+            )
+            )
+            }
           </div>
         </ScrollArea>
       </div>
