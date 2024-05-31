@@ -2,7 +2,7 @@ import "server-only";
 import { db } from ".";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { items, lists, listsRelationships, listsUsers, users } from "./schema";
-import { eq, sql } from "drizzle-orm/sql";
+import { and, eq, sql } from "drizzle-orm/sql";
 import type { UserSignup, UserDeleted } from "~/types/clerk/clerk-user";
 import { type ItemType, type ListStatus } from "./types";
 
@@ -168,6 +168,60 @@ export async function createList({
     await tx.insert(listsUsers).values({listsId: list[0].id, usersId: userDbObj.id})
     
   })
+}
+
+
+export async function deleteList(listId: number){
+  const user = auth();
+  if (!user.userId) throw new Error("Unauthorized");
+
+  const userDbObj = await getDBUserId(user.userId);
+
+  // Do not throw, but handle maybe deleted user?
+  if (!userDbObj?.id) {
+    // throw new Error("No user id gotten from mail");
+    return [];
+  }
+    
+
+  const userAuthId = userDbObj.clerkId;
+
+  // Start a transaction
+   return await db.transaction(async (tx) => {
+    // Get db userid
+    const dbUsers = await tx
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, userAuthId));
+
+    // user from db.
+    const user = dbUsers?.at(0);
+
+    // If user not found, return. Something went wrong
+    if (!user) {
+      return;
+    }
+
+    
+    // Handle trying to delete parent first ? 
+      // Throw that child list must be deleted first.
+    
+    // console.log("Deleting list USers")
+    // await tx
+    // .delete(listsUsers)
+    // .where(eq(listsUsers.listsId, listId));
+    // Delete entries from lists_users where usersId matches the userId
+    const deletedList = await tx
+    .delete(lists)
+    .where(eq(lists.id, listId))
+    .returning();
+
+    await tx.delete(items)
+        .where(eq(items.listsId, listId))
+        .returning()
+    
+    return deletedList; 
+  });
 }
 
 export async function getMyLists() {

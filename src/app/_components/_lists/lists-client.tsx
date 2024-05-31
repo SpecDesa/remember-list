@@ -1,50 +1,29 @@
 'use client';
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { type RelatedUser} from "~/server/db/queries";
-import GetAvatar from "./get-avatar";
-import { URLS } from "../_urls/urls";
-import GoToButton from "./go-to-button";
-import { useCallback, useEffect, useMemo, useState, type FC } from "react";
+import GetAvatar from "../get-avatar";
+import { URLS } from "../../_urls/urls";
+import GoToButton from "../go-to-button";
+import {  useEffect, useState, type FC } from "react";
 import { useRouter } from "next/navigation";
 import { ListStatus } from "~/server/db/types";
-import { ListAction } from "../(lister)/lister/page";
-import Swipeable from "./swipeable";
+import { ListAction } from "../../(lister)/lister/page";
+import Swipeable from "../swipeable";
 import { Button } from "~/components/ui/button";
+import DeleteListButton from "./delete-list-button";
 export const dynamic = "force-dynamic";
 
 interface ListsClientProps {
   lists: RelatedUser[];
 }
 
-const ListsClient: FC<ListsClientProps> = ({ lists }) => {
+
+  
+
+const ListsClient: FC<ListsClientProps> = ({ lists}) => {
   const [isMounted, setIsMounted] = useState(false);
-  const [showDelete, setShowDelete] = useState<{index?: number, showDelete: boolean }>({index: undefined, showDelete: false});
 
   const router = useRouter();
-  // Memoize JSX elements dependent on showDelete state
-  // const deleteElements = useMemo(() => {
-  //   return lists.map((list, idx) => {
-  //     return (
-  //       showDelete.showDelete && showDelete.index === idx && (
-  //         <div key={idx + "_delete"}>123</div>
-  //       )
-  //     );
-  //   });
-  // }, [lists, showDelete]);
-
-      // Memoize the signalPartialLeftSwipe function
-  const handlePartialLeftSwipe = useCallback(
-    (idx: number) => {
-      setShowDelete((prev) => ({
-        ...prev,
-        showDelete: !prev.showDelete,
-        index: idx,
-      }));
-    },
-    [setShowDelete]
-  );
-
-
       // This is a side effect that runs after the first render and sets the isMounted state to true
       useEffect(() => {
         setIsMounted(true);
@@ -54,7 +33,6 @@ const ListsClient: FC<ListsClientProps> = ({ lists }) => {
     if (!isMounted) {
         return null;
     }
-
 
   
   return (
@@ -67,23 +45,24 @@ const ListsClient: FC<ListsClientProps> = ({ lists }) => {
               <div key={idx + "_outer"} className="flex flex-row">
                 
               <Swipeable key={idx + "_outer"} 
-              deleteButton={<Button variant={"destructive"} className="w-3/4 h-full">Delete</Button>}
+                deleteButton={
+                <DeleteListButton listId={list.listId} /> 
+              }
               >
               <div
                 className="shadow-3xl  transform 
                             bg-white transition-all duration-300 
                             hover:translate-y-1 hover:cursor-pointer md:hover:bg-gray-300"
                 onClick={() => {
-                  console.log("list type", list.listType);
-                  if(list.listType === ListStatus.SHOPPING.valueOf()){
-                    return router.push(`/liste?listId=${list.listId}&action=${ListAction.Buy}`)
-                  } 
-                  else if(list.listType === ListStatus.STOCKING.valueOf()) {
-                    return router.push(`/liste?listId=${list.listId}&action=${ListAction.View}`)
-                  }
-                  else {
-                    return router.push(`/${URLS.HOME}`)
-                  }
+                if(list.listType === ListStatus.SHOPPING.valueOf()){
+                  return router.push(`/liste?listId=${list.listId}&action=${ListAction.Buy}`)
+                } 
+                else if(list.listType === ListStatus.STOCKING.valueOf()) {
+                  return router.push(`/liste?listId=${list.listId}&action=${ListAction.View}`)
+                }
+                else {
+                  return router.push(`/${URLS.HOME}`)
+                }
                 }
               }
               >

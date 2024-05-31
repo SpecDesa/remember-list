@@ -12,6 +12,7 @@ const fullSwipeDistance = 100; // Distance for full swipe
 interface SwipeableProps {
   children: ReactNode;
   deleteButton: ReactNode;
+  onDeleteButton?: () => void;
   signalFullLeftSwipe?: () => void;
   signalPartialLeftSwipe?: () => void;
 }
@@ -27,8 +28,8 @@ const Swipeable: React.FC<SwipeableProps> = ({ children,deleteButton,  signalPar
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
       if (!(e.target as HTMLElement).closest(".swipeable")) {
-        setPosition(0); // Reset position if clicked outside the swipeable div
-        setSwipeAction(null); // Reset swipe action
+          setPosition(0); // Reset position if clicked outside the swipeable div
+          setSwipeAction(null); // Reset swipe action
       }
     };
 
@@ -114,7 +115,7 @@ const Swipeable: React.FC<SwipeableProps> = ({ children,deleteButton,  signalPar
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      className="flex flex-row flex-grow"
+      className="flex flex-row flex-grow swipeable"
       style={{
         // left: position > 0 ? `${position}px` : "0", // Adjust left position based on swipe distance
         // transform: `translateX(${position / 2}px)`,
@@ -123,11 +124,11 @@ const Swipeable: React.FC<SwipeableProps> = ({ children,deleteButton,  signalPar
 
       }}
     >
-      <div className={touchStart ? "w-56": 'flex-grow'}
+      <div className={touchStart &&  touchEnd &&  touchStart - touchEnd  > 5 ? "w-56": 'flex-grow'}
         style={{
           // transform: position >= 0 ? `scaleX(${1 - Math.abs(position) / fullSwipeDistance})` : "scaleX(1)", // Adjust scaleX based on swipe distance if position >= 0
 
-          transform: `scaleX(${position <= 0 && position > -105 ? 1 - Math.abs(position) / fullSwipeDistance : 0})`, // Adjust scaleX based on swipe distance
+          transform: `scaleX(${position <= 0 && position > - 105 ? 1 - ((Math.abs(position)*0.1) / fullSwipeDistance) : 0})`, // Adjust scaleX based on swipe distance
           transformOrigin: "left", // Keep origin at the right side
           transition: "transform 0.3s ease-out", // Add transition for smooth scaling
           opacity: position >= fullSwipeDistance ? 0 : 1, // Hide the div when fullSwipeDistance is reached

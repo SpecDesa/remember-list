@@ -21,8 +21,9 @@ export default async function ListsServer() {
 
   const lists = await getMyLists();
   await populateListsWithAvatars(lists);
+    
 
   return (
-    <ListsClient lists={lists} />
+    <ListsClient lists={lists}/>
   );
 }

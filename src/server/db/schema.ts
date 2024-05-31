@@ -77,7 +77,7 @@ export const items = createTable(
   {
     id: serial("id").primaryKey().notNull(),
     name: varchar("name", { length: 256 }),
-    listsId: integer("lists_id").references(() => lists.id).notNull(),
+    listsId: integer("lists_id").references(() => lists.id, {onDelete: 'cascade'}).notNull(),
     quantity: integer("quantity").default(0).notNull(),
     threshold: integer("threshold"), // Minimum quantity to maintain
     timeThreshold: varchar("time_threshold", { length: 256 }), // Interval to buy the item (e.g., '1 week', '1 month')
@@ -117,7 +117,7 @@ export const listsUsers = createTable(
   {
     id: serial("id").primaryKey().notNull(),
     usersId: integer("users_id").references(() => users.id).notNull(),
-    listsId: integer("lists_id").references(() => lists.id).notNull(),
+    listsId: integer("lists_id").references(() => lists.id, {onDelete: 'cascade'}).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
