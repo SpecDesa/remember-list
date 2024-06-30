@@ -1,7 +1,3 @@
-// ListsServer.tsx
-// import { type RelatedUser, getMyLists } from "~/server/db/queries";
-// import ListsClient from "./lists-client";
-// import { clerkClient } from "@clerk/nextjs/server";
 import { Button } from "~/components/ui/button";
 
 export default function DeleteListButton({ listId }: { listId: number }) {
@@ -11,9 +7,15 @@ export default function DeleteListButton({ listId }: { listId: number }) {
       method: "DELETE",
       body: JSON.stringify({ listId }),
     })
-      .then((resp) => {
+      .then(async (resp) => {
         if (resp.status === 200) {
-          console.log("Worked");
+          await fetch('/api/pusher/communication', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ type: 'delete', listId })
+        })
         }
       })
       .catch((error) => {

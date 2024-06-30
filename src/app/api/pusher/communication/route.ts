@@ -5,14 +5,17 @@ const pusherServer = getPusherInstance();
 
 export async function POST(req: Request, res: Response) {
     try {
+        const request = await req.json() as unknown;
+        console.log("req", request)
         await pusherServer.trigger(
             'private-chat-lists',
             "evt::list-update",
-            {
-                message: "test",
-                user: "ree",
-                date: new Date(),
-            }
+            request
+            // {
+            //     message: "test",
+            //     user: "ree",
+            //     date: new Date(),
+            // }
         )
 
         return NextResponse.json({ message: "Sockets tested" }, { status: 200 })

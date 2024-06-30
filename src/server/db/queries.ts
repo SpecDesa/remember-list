@@ -162,8 +162,11 @@ export async function createList({
     type: type,
   };
 
+
   await db.transaction(async (tx) => {
+    console.log("Insert lists")
     const list = await tx.insert(lists).values(newList).returning();
+    console.log("Inserted", list)
     if(!list?.[0]) return;
     await tx.insert(listsUsers).values({listsId: list[0].id, usersId: userDbObj.id})
     

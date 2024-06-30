@@ -22,20 +22,26 @@ interface ListsClientProps {
 
   
 
-const ListsClient: FC<ListsClientProps> = ({ lists}) => {
+const ListsClient: FC<ListsClientProps> = ({ lists: listsProp}) => {
   const [isMounted, setIsMounted] = useState(false);
   const [messages, setMessages] = useState<unknown[]>([])
+  const [lists, setLists] = useState(listsProp);
 
   useEffect(() => {
     const channel = pusherClient
         .subscribe('private-chat-lists')
-        .bind("evt::list-update", (data: unknown) => {
-            console.log("test", data)
+        .bind("evt::list-update", (data: {listId: number, type: string}) => {
+            const {listId, type} = data;
+            if (type === 'delete') {
+              setLists(prevLists => prevLists.filter(list => list.listId !== listId));
+            }
             setMessages((prevMessages) => [...prevMessages, data]);
           });
 
     return () => {
         channel.unbind();
+        pusherClient.unsubscribe('private-chat-lists');
+
     };
 }, []);
 
@@ -77,6 +83,26 @@ const ListsClient: FC<ListsClientProps> = ({ lists}) => {
         <Swipeable
           key={idx + "_outer"}
           deleteButton={<DeleteListButton listId={list.listId} />}
+          signalFullLeftSwipe={async () => {
+            await fetch("/api/db/lists", {
+              method: "DELETE",
+              body: JSON.stringify({ listId: list.listId }),
+            })
+              .then(async (resp) => {
+                if (resp.status === 200) {
+                  await fetch('/api/pusher/communication', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ type: 'delete', listId: list.listId })
+                })
+                }
+              })
+              .catch((error) => {
+                console.log("error", error);
+              });
+          }}
         >
           <div
             className="shadow-3xl  transform 
@@ -111,13 +137,6 @@ const ListsClient: FC<ListsClientProps> = ({ lists}) => {
   }
   return (
     <div className="h-[80vh] flex-row">
-      <button
-        type='button'
-        className="w-[240px] bg-slate-600 hover:bg-slate-500 rounded p-2 m-2"
-        onClick={handleTestClick}
-      >
-        Test
-      </button>
       <h2 className="mb-2 ms-8 mt-2 flex text-2xl">Dine Lister</h2>
       <div className="flex flex-wrap justify-center gap-4">
         <ScrollArea className="h-[380px] w-5/6 gap-4 rounded-md md:h-[600px] md:w-2/3">

@@ -13,7 +13,7 @@ import { URLS } from '../../_urls/urls';
 
 
 const formSchema = z.object({
-  name: z.string(),
+  name: z.string().trim().min(1, {message: "Et navn er obligatorisk"}),
   type: z.nativeEnum(ListStatus),
 })
 
@@ -24,16 +24,18 @@ export default function CreateList(){
         // Take formschema and map schema and zod, so it is connected.
         resolver: zodResolver(formSchema),
         defaultValues: {
-          name: undefined,
+          name: "",
           type: ListStatus.STOCKING,
         }
       });
 
-      const inputFormat = 'w-3/4 md:w-2/4' ;
+      const inputFormat = 'w-3/4 sm:w-2/4 mt-4 mb-4' ;
       const defaultTextFormat = 'text-center justify-center';
       
       // wont fire if form invalid, because of z setup with forms.
       const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+        if(values.name === '') return;
+
         const res = await fetch('/api/lists', {
           method: 'POST',
           headers: {
@@ -55,7 +57,7 @@ export default function CreateList(){
       return (
         <div>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className='flex flex-col space-y-8 items-center flex-1'>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className='flex flex-col items-center flex-1'>
               <FormField
                 control={form.control}
                 name="name"
@@ -74,7 +76,6 @@ export default function CreateList(){
               />
 
               <FormField
-
                 control={form.control}
                 name="type"
                 render={({ field }) => {
@@ -105,14 +106,10 @@ export default function CreateList(){
                   );
                 }}
               />
-              <Button type="submit">Tilføj liste </Button>
+              <Button disabled={form.formState.isSubmitting} className='mt-64 sm:mt-6 sm:w-2/4' type="submit">Tilføj liste </Button>
             </form>
           </Form>
         </div>
       );
 
-
-     
-
-      
 }
