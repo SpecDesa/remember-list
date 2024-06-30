@@ -11,7 +11,6 @@ const ListeClient: React.FC<ListeClientProps> = ({ action }) => {
     if (action === ListAction.View.valueOf()) {
       return <ListeClientView />;
     } else if (action === ListAction.Buy.valueOf()) {
-      console.log("Here")
       return <ListeClientBuy />;
     } else {
       return;

@@ -48,7 +48,9 @@ export default function CreateList(){
         if(res.status !== 200){
                 console.error("Error when creating list")
                 return; 
-            }
+          }
+
+        
         
         return router.push(URLS.HOME) 
         

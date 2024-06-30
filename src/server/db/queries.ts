@@ -163,14 +163,23 @@ export async function createList({
   };
 
 
-  await db.transaction(async (tx) => {
-    console.log("Insert lists")
+  const some = await db.transaction(async (tx) => {
     const list = await tx.insert(lists).values(newList).returning();
-    console.log("Inserted", list)
     if(!list?.[0]) return;
-    await tx.insert(listsUsers).values({listsId: list[0].id, usersId: userDbObj.id})
-    
+    const resultListsUsers = await tx.insert(listsUsers)
+      .values({listsId: list[0].id, usersId: userDbObj.id})
+      .returning();
+
+    return {
+      listId: list[0].id,
+      name: newList.name,
+      listType: newList.type,
+      ids: resultListsUsers[0]?.usersId,
+      avatars: [{clerkId: user.userId}],
+    }
   })
+
+  return some;
 }
 
 
@@ -284,7 +293,7 @@ export async function getMyLists() {
 
   // Perform type assertion for userEmail
   const typedRelatedUsers: RelatedUser[] = relatedUsers.map((user) => ({
-    name: user.name!,
+    name: user.name,
     ids: user.ids as string[],
     listId: user.listId,
     listType: user.listType
