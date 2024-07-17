@@ -11,6 +11,7 @@ export interface Item {
 export interface ItemSlice {
   items: Item[];
   addItem: (name: string, quantity: number) => void;
+  clearItems: () => void;
   removeItem: (id: string) => void;
   increaseQuantity: (id: string) => void;
   decreaseQuantity: (id: string) => void;
@@ -32,8 +33,10 @@ export const createItemSlice: StateCreator<
     ],
   })),
 
+  clearItems: () => set({ items: [] }),
+
   removeItem: (id: string) => set((state) => ({
-    items: state.items.filter(item => item.id !== id),
+    items: state.items.filter(item => item.id === id),
   })),
 
   increaseQuantity: (id: string) => set((state) => ({

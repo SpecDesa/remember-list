@@ -139,8 +139,9 @@ const ListsClient: FC<ListsClientProps> = ({ lists: listsProp }) => {
     return null;
   }
   return (
-    <div className="h-[80vh] flex-row">
-      <h2 className="mb-2 ms-8 mt-2 flex text-2xl">Dine Lister</h2>
+    <div className="h-[60vh] content-end">
+    {/* <div className="h-[80vh] flex-row"> */}
+      <h2 className="mb-2 ms-8 flex text-2xl">Dine Lister</h2>
       <div className="flex flex-wrap justify-center gap-4">
         <ScrollArea className="h-[380px] w-5/6 gap-4 rounded-md md:h-[600px] md:w-2/3">
           <div className="flex flex-col gap-1 p-4">{renderedLists}</div>

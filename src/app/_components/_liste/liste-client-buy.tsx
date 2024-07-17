@@ -20,7 +20,6 @@ const ListeClientBuy: React.FC = ({}) => {
     removeItem,
     increaseQuantity,
     decreaseQuantity,
-    toggleBought,
   } = useIndexStore();
 
   useEffect(() => {

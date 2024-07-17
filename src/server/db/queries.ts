@@ -139,6 +139,32 @@ async function getDBUserId(authId: string) {
   });
 }
 
+export async function createItem({itemName, listId}: {itemName: string, listId: number}){
+  const user = auth();
+  if (!user.userId) throw new Error("Unauthorized");
+
+  const userDbObj = await getDBUserId(user.userId);
+  if (!userDbObj?.id) {
+    return false;
+  }
+
+  type NewItem = typeof items.$inferInsert;
+  const newItem: NewItem = {
+    listsId: listId,
+    name: itemName,
+  };
+
+  const some = await db.transaction(async (tx) => {
+    const item = await tx.insert(items).values(newItem).returning();
+    if(!item?.[0]) return;
+
+    return item?.[0].id
+  });
+
+
+  return some;
+}
+
 export async function createList({
   name,
   type,
@@ -182,6 +208,27 @@ export async function createList({
   return some;
 }
 
+
+export async function deleteItem(listId: number, itemId: number){
+  const user = auth();
+  if (!user.userId) throw new Error("Unauthorized");
+
+  const userDbObj = await getDBUserId(user.userId);
+
+  // Do not throw, but handle maybe deleted user?
+  if (!userDbObj?.id) {
+    // throw new Error("No user id gotten from mail");
+    return [];
+  }
+    
+
+  // const userAuthId = userDbObj.clerkId;
+  // Start a transaction
+  return await db.transaction(async (tx) => {
+    await tx.delete(items).where(eq(items.id, itemId));
+    return true;
+  });
+}
 
 export async function deleteList(listId: number){
   const user = auth();

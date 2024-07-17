@@ -11,7 +11,7 @@ const fullSwipeDistance = 100; // Distance for full swipe
 
 interface SwipeableProps {
   children: ReactNode;
-  deleteButton: ReactNode;
+  deleteButton?: ReactNode;
   onDeleteButton?: () => void;
   signalFullLeftSwipe?: () => void;
   signalPartialLeftSwipe?: () => void;
