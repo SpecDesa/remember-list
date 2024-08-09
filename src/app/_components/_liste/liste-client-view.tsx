@@ -54,14 +54,15 @@ const ListeClientView: React.FC = ({}) => {
           const newDate = new Date();
               const aNewItem: ItemType = {
                 listsId: listId,
-                name: itemName, 
-                quantity:0,
+                name: itemName,
+                quantity: 0,
                 id: -1,
                 threshold: -1,
                 createdAt: newDate,
                 lastPurchased: newDate,
                 timeThreshold: "",
                 updatedAt: newDate,
+                bought: null
               }
 
               setData((prevData) => {

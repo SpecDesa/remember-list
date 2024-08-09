@@ -15,6 +15,7 @@ import { useIndexStore } from '~/stores/global-store';
 const formSchema = z.object({
   name: z.string().trim().min(1, {message: "Et navn er obligatorisk"}),
   listId: z.number(),
+  quantity: z.number().nullable(),
 })
 
 export default function CreateList(){
@@ -26,6 +27,7 @@ export default function CreateList(){
         defaultValues: {
           name: "",
           listId: idOfDatabaseList,
+          quantity: 1,
         //   type: ListStatus.STOCKING,
         }
       });
@@ -38,6 +40,7 @@ export default function CreateList(){
         if(values.name === '') return;
         if(!values.listId) return;
 
+
         const res = await fetch('/api/list-items', {
           method: 'POST',
           headers: {
@@ -48,7 +51,7 @@ export default function CreateList(){
         })
         
         if(res.status !== 200){
-                console.error("Error when creating list")
+                console.error("Error when adding item to list")
                 return router.push(URLS.HOME)
           }
 

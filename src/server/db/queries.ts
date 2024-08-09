@@ -139,7 +139,7 @@ async function getDBUserId(authId: string) {
   });
 }
 
-export async function createItem({itemName, listId}: {itemName: string, listId: number}){
+export async function createItem({itemName, listId, quantity}: {itemName: string, listId: number, quantity?: number}){
   const user = auth();
   if (!user.userId) throw new Error("Unauthorized");
 
@@ -152,6 +152,7 @@ export async function createItem({itemName, listId}: {itemName: string, listId: 
   const newItem: NewItem = {
     listsId: listId,
     name: itemName,
+    quantity: quantity,
   };
 
   const some = await db.transaction(async (tx) => {

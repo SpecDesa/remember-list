@@ -3,30 +3,47 @@
 import { useEffect, useState } from "react";
 import { getItemsFromList } from "./liste-server";
 import { type ItemType } from "~/server/db/types";
-import { useSearchParams } from "next/navigation";
 import { Checkbox } from "~/components/ui/checkbox";
 import ExpandableButton from "./expandable-button";
 import { useIndexStore } from "~/stores/global-store";
 import { Button } from "~/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import GoToButton from "../go-to-button";
+import { URLS } from "~/app/_urls/urls";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Item } from "~/stores/item-store";
 
 const ListeClientBuy: React.FC = ({}) => {
   const [data, setData] = useState<ItemType[]>();
   const [showBought, setShowBought] = useState<boolean>(false);
+  const [boughtItems, setBoughtItems] = useState<Item[]>([]);
   const searchParams = useSearchParams();
+  const path = usePathname();
   const {
     items,
     addItem,
     removeItem,
     increaseQuantity,
     decreaseQuantity,
+    setUrlOnSuccess,
+    setListId
   } = useIndexStore();
+
+
+  useEffect(() => {
+    const listId = Number(searchParams.get("listId"));
+    const action = searchParams.get("action");
+    console.log(`${path}?listId=${listId}&action=${action}`);
+    setUrlOnSuccess(`${path}?listId=${listId}&action=${action}`);
+  }, [path, searchParams, setUrlOnSuccess])
+
 
   useEffect(() => {
     const fetchData = async () => {
       // Fetch data when component mounts
       const listId = Number(searchParams.get("listId"));
       if (listId) {
+        setListId(listId);
         const fetchedData = await getItemsFromList({ listId: listId });
         setData(fetchedData);
       }
@@ -52,6 +69,15 @@ const ListeClientBuy: React.FC = ({}) => {
       }
     }
   }, [addItem, data, items]);
+
+  const addItemDiv = () => {
+    return  <div className="">
+    <GoToButton
+      text="Tilføj"
+      url={`${URLS.ADD_ITEMS}?`}
+    />
+  </div>
+  }
 
   return (
     <div className="my-4 flex flex-col items-center justify-center">
@@ -96,7 +122,13 @@ const ListeClientBuy: React.FC = ({}) => {
                         {local.name}
                       </div>
                       <div className="flex justify-end md:col-span-1 ">
-                        <Checkbox id="terms1" className="size-6" />
+                        <Checkbox id="terms1" className="size-6" onClick={() => {
+                          console.log(local)
+                          // setBoughtItems((prev))
+                          setBoughtItems((prevData) => {
+                            return prevData ? [local, ...prevData] : [local];
+                          })
+                        }}/>
                       </div>
                     </div>
                   </div>
@@ -107,6 +139,9 @@ const ListeClientBuy: React.FC = ({}) => {
         ) : (
           <div>Henter liste</div>
         )}
+      </div>
+      <div className="h-[50vh] content-end">
+      {addItemDiv()}
       </div>
       <div className="mb-4 my-12 text-xl hover:cursor-pointer md:hover:bg-gray-300">
         <Button variant={"ghost"} onClick={() => setShowBought((prev) => !prev)}>

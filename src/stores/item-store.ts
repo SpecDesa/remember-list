@@ -4,7 +4,7 @@ export interface Item {
   id: string;
   name: string;
   quantity: number;
-  isBought: boolean;
+  bought: boolean;
 }
 
 // Define the interface for the item slice
@@ -29,7 +29,7 @@ export const createItemSlice: StateCreator<
   addItem: (name: string, quantity: number) => set((state) => ({
     items: [
       ...state.items,
-      { id: `${Date.now()}_${name}`, name, quantity: quantity, isBought: false },
+      { id: `${Date.now()}_${name}`, name, quantity: quantity, bought: false },
     ],
   })),
 
@@ -53,7 +53,7 @@ export const createItemSlice: StateCreator<
 
   toggleBought: (id: string) => set((state) => ({
     items: state.items.map(item => 
-      item.id === id ? { ...item, isBought: !item.isBought } : item
+      item.id === id ? { ...item, bought: !item.bought } : item
     ),
   })),
 })

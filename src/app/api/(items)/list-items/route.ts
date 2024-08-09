@@ -10,10 +10,8 @@ export async function POST(req: Request) {
   // const userInfo = useUser();
 
 
-  const itemObj = await req.json() as unknown as {name: string, listId: number}
-  
-    const itemCreated = await createItem({itemName: itemObj.name, listId: itemObj.listId})
-    
+  const itemObj = await req.json() as unknown as {name: string, listId: number, quantity?: number}
+    const itemCreated = await createItem({itemName: itemObj.name, listId: itemObj.listId, quantity: itemObj?.quantity})
     if(!itemCreated) return Response.json({msg: "Item not created."}, {status: 400});
 
     
