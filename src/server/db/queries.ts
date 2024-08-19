@@ -24,6 +24,42 @@ export async function getItems(listId: number) {
   return items;
 }
 
+export async function updateItemBought(itemId: number, bought: boolean){
+  const user = auth();
+  if (!user.userId) throw new Error("Unauthorized");
+
+  const userDbObj = await getDBUserId(user.userId);
+
+  if (!userDbObj?.id) {
+    return [];
+  }
+
+  return await db.transaction(async (tx) => {
+    // Get listsId from item
+    const dbItem = await tx.query.items.findFirst({
+      where: (model, { eq }) => eq(model.id, itemId),
+    });
+
+    if(!dbItem?.id){
+      console.error(`Could not find list that item to update belonged to. itemId: ${itemId}, dbItem id: ${dbItem?.id}`)
+      return
+    }
+    // find entry in listsusers where userId and listsid is there
+    const userAllowedToUpdate = await tx.query.listsUsers.findFirst({
+      where: (model, {eq, and}) => and(eq(model.usersId, userDbObj.id), eq(model.listsId, dbItem.listsId) )
+    });
+
+    if(!userAllowedToUpdate){
+      console.error(`User ${userDbObj.id} is not allowed to update item with id: ${itemId}`)
+      return 
+    }
+
+    // update bought
+    return await tx.update(items).set({bought: bought}).where(eq(items.id, itemId)).returning();
+})
+}
+
+
 export async function updateItemQuantity(itemId: number, quantity: number){
   const user = auth();
   if (!user.userId) throw new Error("Unauthorized");
@@ -161,7 +197,6 @@ export async function createItem({itemName, listId, quantity}: {itemName: string
 
     return item?.[0].id
   });
-
 
   return some;
 }

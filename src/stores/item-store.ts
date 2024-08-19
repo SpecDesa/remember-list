@@ -1,7 +1,8 @@
+
 import { type StateCreator } from "zustand";
 
 export interface Item {
-  id: string;
+  id: number;
   name: string;
   quantity: number;
   bought: boolean;
@@ -10,12 +11,12 @@ export interface Item {
 // Define the interface for the item slice
 export interface ItemSlice {
   items: Item[];
-  addItem: (name: string, quantity: number) => void;
+  addItem: (id: number, name: string, quantity: number, bought?: boolean) => void;
   clearItems: () => void;
-  removeItem: (id: string) => void;
-  increaseQuantity: (id: string) => void;
-  decreaseQuantity: (id: string) => void;
-  toggleBought: (id: string) => void;
+  removeItem: (id: number) => void;
+  increaseQuantity: (id: number) => void;
+  decreaseQuantity: (id: number) => void;
+  toggleBought: (id: number) => void;
 }
 
 export const createItemSlice: StateCreator<
@@ -26,32 +27,32 @@ export const createItemSlice: StateCreator<
 > = (set) => ({
   items: [],
 
-  addItem: (name: string, quantity: number) => set((state) => ({
+  addItem: (id: number, name: string, quantity: number, bought = false) => set((state) => ({
     items: [
       ...state.items,
-      { id: `${Date.now()}_${name}`, name, quantity: quantity, bought: false },
+      { id: id, name, quantity: quantity, bought: bought },
     ],
   })),
 
   clearItems: () => set({ items: [] }),
 
-  removeItem: (id: string) => set((state) => ({
-    items: state.items.filter(item => item.id === id),
+  removeItem: (id: number) => set((state) => ({
+    items: state.items.filter(item => item.id !== id),
   })),
 
-  increaseQuantity: (id: string) => set((state) => ({
+  increaseQuantity: (id: number) => set((state) => ({
     items: state.items.map(item => 
       item.id === id ? { ...item, quantity: item.quantity + 1 } : item
     ),
   })),
 
-  decreaseQuantity: (id: string) => set((state) => ({
+  decreaseQuantity: (id: number) => set((state) => ({
     items: state.items.map(item => 
       item.id === id ? { ...item, quantity: item.quantity > 0 ? item.quantity - 1 : 0 } : item
     ),
   })),
 
-  toggleBought: (id: string) => set((state) => ({
+  toggleBought: (id: number) => set((state) => ({
     items: state.items.map(item => 
       item.id === id ? { ...item, bought: !item.bought } : item
     ),

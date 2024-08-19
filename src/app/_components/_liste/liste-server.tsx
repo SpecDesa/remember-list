@@ -1,6 +1,6 @@
 "use server";
 // ListeServer.tsx
-import { getItems, updateItemQuantity } from '~/server/db/queries';
+import { getItems, updateItemQuantity, updateItemBought, deleteItem } from '~/server/db/queries';
 
 interface ListeServerProps {
   listId: number;
@@ -12,8 +12,16 @@ export const getItemsFromList = async ({listId}: ListeServerProps) => {
   return items
 };
 
-export const updateItemFromList = async ({id, quantity}: {id: number, quantity: number}) => {
+export const updateItemQuantityFromList = async ({id, quantity}: {id: number, quantity: number}) => {
   void updateItemQuantity(id,quantity);
+};
+
+export const deleteItemFromList = async ({listId, id}: {listId: number, id: number}) => {
+  void deleteItem(listId, id);
+};
+
+export const updateItemBoughtFromList = async ({id, bought}: {id: number, bought: boolean}) => {
+  void updateItemBought(id, bought);
 };
 
 

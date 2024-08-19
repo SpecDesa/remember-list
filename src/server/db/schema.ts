@@ -82,6 +82,7 @@ export const items = createTable(
     quantity: integer("quantity").default(0).notNull(),
     threshold: integer("threshold"), // Minimum quantity to maintain
     bought: boolean("bought").default(false), // to indicate if a shopping item has been bought
+    archived: boolean("archived").default(false), // to hide shopping items when list is finished.
     timeThreshold: varchar("time_threshold", { length: 256 }), // Interval to buy the item (e.g., '1 week', '1 month')
     lastPurchased: timestamp("last_purchased", { withTimezone: true }), // Last time the item was purchased
     createdAt: timestamp("created_at", { withTimezone: true })

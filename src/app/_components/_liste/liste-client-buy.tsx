@@ -1,7 +1,11 @@
 "use client";
-// import { getItems } from "~/server/db/queries";
 import { useEffect, useState } from "react";
-import { getItemsFromList } from "./liste-server";
+import {
+  getItemsFromList,
+  updateItemBoughtFromList,
+  updateItemQuantityFromList,
+  deleteItemFromList,
+} from "./liste-server";
 import { type ItemType } from "~/server/db/types";
 import { Checkbox } from "~/components/ui/checkbox";
 import ExpandableButton from "./expandable-button";
@@ -11,33 +15,41 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import GoToButton from "../go-to-button";
 import { URLS } from "~/app/_urls/urls";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Item } from "~/stores/item-store";
 
 const ListeClientBuy: React.FC = ({}) => {
   const [data, setData] = useState<ItemType[]>();
   const [showBought, setShowBought] = useState<boolean>(false);
-  const [boughtItems, setBoughtItems] = useState<Item[]>([]);
+  // is type Item - but mismatching id types of number and string...
+  const [boughtItems, setBoughtItems] = useState<
+    {
+      id: number;
+      name: string | null;
+      quantity: number;
+      bought: boolean | null;
+    }[]
+  >([]);
   const searchParams = useSearchParams();
   const path = usePathname();
   const {
     items,
     addItem,
     removeItem,
+    toggleBought,
     increaseQuantity,
     decreaseQuantity,
     setUrlOnSuccess,
-    setListId
+    setListId,
+    listId,
   } = useIndexStore();
-
 
   useEffect(() => {
     const listId = Number(searchParams.get("listId"));
     const action = searchParams.get("action");
-    console.log(`${path}?listId=${listId}&action=${action}`);
+    // console.log(`${path}?listId=${listId}&action=${action}`);
     setUrlOnSuccess(`${path}?listId=${listId}&action=${action}`);
-  }, [path, searchParams, setUrlOnSuccess])
+  }, [path, searchParams, setUrlOnSuccess]);
 
-
+  // Fetch and set data from db on first load.
   useEffect(() => {
     const fetchData = async () => {
       // Fetch data when component mounts
@@ -45,7 +57,9 @@ const ListeClientBuy: React.FC = ({}) => {
       if (listId) {
         setListId(listId);
         const fetchedData = await getItemsFromList({ listId: listId });
-        setData(fetchedData);
+        // Setting data fetched from db
+        setData(fetchedData.filter((item) => item.bought !== true));
+        setBoughtItems(fetchedData.filter((item) => item.bought));
       }
     };
 
@@ -56,60 +70,126 @@ const ListeClientBuy: React.FC = ({}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Add data to store, to manipulate view. f
   useEffect(() => {
     if (!data) {
       return;
     }
+    // console.log("Runs again and adds cola?")
     for (const dataItem of data) {
+      console.log(dataItem)
       if (
         dataItem?.name &&
-        !items.find((item) => item.name === dataItem.name)
+        !items.find((item) => item.id === dataItem.id)
       ) {
-        addItem(dataItem?.name, dataItem?.quantity);
+        addItem(dataItem.id, dataItem?.name, dataItem?.quantity);
       }
     }
-  }, [addItem, data, items]);
 
+    // // Include bought items
+    for (const dataItem of boughtItems) {
+      if (
+        dataItem?.name &&
+        !items.find((item) => item.id === dataItem.id)
+      ) {
+        addItem(dataItem.id, dataItem?.name, dataItem?.quantity, true);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
+  useEffect(() => {
+
+    const debounceTimeout = setTimeout(() => {
+      const deleteItems = items.filter(item => item.quantity <= 0 ? item : undefined).filter(notUndef => notUndef)
+      
+      for(const item of deleteItems){
+        if(item.id){
+          deleteItemFromList({listId: listId, id: item.id});
+          removeItem(item.id);
+        }
+      }
+    }, 2000);
+
+    return () => clearTimeout(debounceTimeout);
+  }, [items])
+
+  // // update quantity to db after timeout
+  useEffect(() => {
+    if (!data) return;
+    // let debounceTimeout: NodeJS.Timeout;
+
+    const debounceTimeout = setTimeout(() => {
+      for (const item of data) {
+        const compareItem = items.find((it) => it.id === item.id);
+        if (!compareItem) continue;
+
+        if (compareItem.quantity !== item.quantity) {
+          // Call queries to update
+          void updateItemQuantityFromList({
+            id: item.id,
+            quantity: compareItem.quantity,
+          }).then(async () => {
+            const listId = Number(searchParams.get("listId"));
+            const fetchedData = await getItemsFromList({ listId: listId });
+            setData(fetchedData);
+          });
+        }
+      }
+    }, 1250);
+
+    return () => clearTimeout(debounceTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
+
+  // Add "tilføj button"
   const addItemDiv = () => {
-    return  <div className="">
-    <GoToButton
-      text="Tilføj"
-      url={`${URLS.ADD_ITEMS}?`}
-    />
-  </div>
-  }
+    return (
+      <div className="">
+        <GoToButton text="Tilføj" url={`${URLS.ADD_ITEMS}?`} />
+      </div>
+    );
+  };
 
   return (
-    <div className="my-4 flex flex-col items-center justify-center">
-      <div className="mb-4 text-2xl">At købe</div>
+    <div className="my-4 flex flex-col items-center justify-center ">
+      <div className="mb-4 text-2xl">Shoppingliste</div>
       <div className="">
-        {data ? (
-          data.length === 0 ? (
-            <div>Listen er tom</div>
-          ) : (
-            data
+      {items ? (
+        items.length === 0 ? (
+          <div>Listen er tom</div>
+        ) : items.every(item => item.bought === true) ? (
+          <div>All varer er krydset af</div>
+        ) : (
+            items
+              .filter((dataitem) => dataitem.bought !== true)
+
               .map((local, index) => {
                 const currentStoreItem = items.find(
-                  (item) => item.name === local.name,
+                  (item) => item.id === local.id,
                 );
+
                 if (!currentStoreItem) {
                   return undefined;
                 }
 
                 return (
                   <div
-                    key={`${index}_local`}
+                    key={local.id}
                     className={
-                      "my-4 min-w-48 rounded-md border border-yellow-800 p-4 shadow md:min-w-96"
+                      "my-4 w-80 min-w-48 rounded-md border border-yellow-800 p-4 shadow md:min-w-96"
                     }
                   >
                     <div className="grid grid-cols-3 items-center gap-2 md:grid-cols-5">
                       <div className="col-span-1 flex justify-start md:col-span-2 ">
                         <ExpandableButton
-                          displayTextBefore={currentStoreItem.quantity}
+                          displayTextBefore={local?.quantity}
                           displayTextAfter={currentStoreItem.quantity}
-                          increaseFunc={() =>
+                          increaseFunc={() =>{
+
+                            console.log("What?", currentStoreItem.id);
                             increaseQuantity(currentStoreItem.id)
+                          }
                           }
                           decreaseFunc={() =>
                             decreaseQuantity(currentStoreItem.id)
@@ -122,13 +202,43 @@ const ListeClientBuy: React.FC = ({}) => {
                         {local.name}
                       </div>
                       <div className="flex justify-end md:col-span-1 ">
-                        <Checkbox id="terms1" className="size-6" onClick={() => {
-                          console.log(local)
-                          // setBoughtItems((prev))
-                          setBoughtItems((prevData) => {
-                            return prevData ? [local, ...prevData] : [local];
-                          })
-                        }}/>
+                        <Checkbox
+                          id="terms1"
+                          className="size-6"
+                          checked={local.bought}
+                          onClick={() => {
+                            if (
+                              local?.bought !== undefined &&
+                              local.bought !== null
+                            ) {
+                              void updateItemBoughtFromList({
+                                id: local.id,
+                                bought: true,
+                              }).then(async () => {
+                                const listId = Number(
+                                  searchParams.get("listId"),
+                                );
+                                const fetchedData = await getItemsFromList({
+                                  listId: listId,
+                                });
+                                setData(fetchedData);
+                              });
+                            }
+
+                            toggleBought(currentStoreItem.id);
+                            setBoughtItems((prevData) => {
+                              // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+                              return prevData
+                                ? [
+                                    local,
+                                    ...prevData.filter(
+                                      (item) => item.name !== local.name,
+                                    ),
+                                  ]
+                                : [local];
+                            });
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -140,19 +250,89 @@ const ListeClientBuy: React.FC = ({}) => {
           <div>Henter liste</div>
         )}
       </div>
-      <div className="h-[50vh] content-end">
-      {addItemDiv()}
-      </div>
-      <div className="mb-4 my-12 text-xl hover:cursor-pointer md:hover:bg-gray-300">
-        <Button variant={"ghost"} onClick={() => setShowBought((prev) => !prev)}>
+      <div className="h-[10vh] content-end">{addItemDiv()}</div>
+      <div className="my-8 mb-4 text-xl hover:cursor-pointer md:hover:bg-gray-300">
+        <Button
+          variant={"ghost"}
+          onClick={() => setShowBought((prev) => !prev)}
+        >
           Vis købte varer
-          {showBought ? 
-          <ChevronUp/>:
-          <ChevronDown/>
-          }
+          {showBought ? <ChevronUp /> : <ChevronDown />}
         </Button>
-
       </div>
+
+      {showBought &&
+        boughtItems.length > 0 &&
+        boughtItems.map((local, index) => {
+          const currentStoreItem = items.find(
+            (item) => item.name === local?.name,
+          );
+          if (!currentStoreItem) {
+            return undefined;
+          }
+
+          return (
+            <div
+              key={local?.id}
+              className={
+                "my-4 w-80 min-w-48 rounded-md border border-yellow-800 p-4 shadow md:min-w-96"
+              }
+            >
+              <div
+                className={`grid grid-cols-3 items-center gap-2 md:grid-cols-5`}
+              >
+                <div className="col-span-1 flex justify-start md:col-span-2 ">
+                  <ExpandableButton
+                    key={local?.id + "_" + index}
+                    displayTextBefore={currentStoreItem?.quantity}
+                    displayTextAfter={currentStoreItem?.quantity}
+                    increaseFunc={() => {
+                      increaseQuantity(currentStoreItem.id);
+                    }}
+                    decreaseFunc={() => {
+                      decreaseQuantity(currentStoreItem.id);
+                    }}
+                    removeFunc={() => () => {
+                      console.log(123);
+                    }}
+                  />
+                </div>
+                <div className="col-span-1 flex items-center justify-center md:col-span-2 ">
+                  {local?.name}
+                </div>
+
+                <div className="flex justify-end md:col-span-1 ">
+                  <Checkbox
+                    id="terms1"
+                    className="size-6"
+                    checked
+                    onClick={async () => {
+                      setBoughtItems((prevData) => {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
+                        return prevData.filter((item) => item !== local);
+                      });
+                      const fetchedData = await getItemsFromList({
+                        listId: listId,
+                      });
+                      const modifiedData = fetchedData.map((item) => {
+                        if (local.id === item.id) {
+                          item.bought = false;
+                        }
+
+                        return item;
+                      });
+                      toggleBought(local.id);
+                      void updateItemBoughtFromList({
+                        id: local.id,
+                        bought: !local.bought,
+                      });
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
     </div>
   );
 };

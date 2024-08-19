@@ -1,7 +1,7 @@
 "use client";
 // import { getItems } from "~/server/db/queries";
 import { useEffect, useState } from "react";
-import {getItemsFromList, updateItemFromList} from "./liste-server";
+import {getItemsFromList, updateItemQuantityFromList} from "./liste-server";
 import { type ItemType } from "~/server/db/types";
 import { usePathname, useSearchParams } from "next/navigation";
 import ExpandableButton from "./expandable-button";
@@ -62,7 +62,8 @@ const ListeClientView: React.FC = ({}) => {
                 lastPurchased: newDate,
                 timeThreshold: "",
                 updatedAt: newDate,
-                bought: null
+                bought: null,
+                archived: false
               }
 
               setData((prevData) => {
@@ -117,7 +118,7 @@ const ListeClientView: React.FC = ({}) => {
         dataItem?.name &&
         !items.find((item) => item.name === dataItem.name)
       ) {
-        addItem(dataItem?.name, dataItem?.quantity);
+        addItem(dataItem.id, dataItem?.name, dataItem?.quantity);
       }
     }
   }, [addItem, data, items]);
@@ -135,7 +136,7 @@ const ListeClientView: React.FC = ({}) => {
 
         if (compareItem.quantity !== item.quantity) {
           // Call queries to update
-          void updateItemFromList({ id: item.id, quantity: compareItem.quantity }).then(async () => {
+          void updateItemQuantityFromList({ id: item.id, quantity: compareItem.quantity }).then(async () => {
             const listId = Number(searchParams.get("listId"));
             const fetchedData = await getItemsFromList({ listId: listId });
             setData(fetchedData);
