@@ -146,10 +146,15 @@ export async function signUpUser(authObj: UserSignup) {
   const data = authObj?.data;
   const accountId = data?.id;
   const email = data?.external_accounts?.[0]?.email_address;
-  const firstName = data?.external_accounts?.[0]?.first_name;
+  let firstName = data?.external_accounts?.[0]?.first_name;
+
+  // Need to handle if firstname not given, i.e. user created via sign up w. email. 
+  if(!firstName || firstName === ''){
+    firstName = email?.split('@')?.[0] ?? 'N/A';
+  }
 
   if (!accountId || !email || !firstName) {
-    console.error("Could not create user in db.")
+    console.error("Could not create user in db. accountId, email, or firstName was not set.")
     return;
   }
 
