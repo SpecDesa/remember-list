@@ -149,6 +149,7 @@ export async function signUpUser(authObj: UserSignup) {
   const firstName = data?.external_accounts?.[0]?.first_name;
 
   if (!accountId || !email || !firstName) {
+    console.error("Could not create user in db.")
     return;
   }
 
