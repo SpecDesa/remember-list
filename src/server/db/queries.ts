@@ -154,7 +154,8 @@ export async function signUpUser(authObj: UserSignup) {
   }
 
   if (!accountId || !email || !firstName) {
-    console.error("Could not create user in db. accountId, email, or firstName was not set.")
+    console.error(`full data obj: ${authObj}`, `is data null ?: ${data}`)
+    console.error("Could not create user in db. accountId, email, or firstName was not set.", `firstname: ${firstName}, email: ${email}, accountId: ${accountId}`);
     return;
   }
 
