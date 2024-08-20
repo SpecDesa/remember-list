@@ -145,7 +145,7 @@ export async function signUpUser(authObj: UserSignup) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
   const data = authObj?.data;
   const accountId = data?.id;
-  const email = data?.external_accounts?.[0]?.email_address;
+  const email = data?.external_accounts?.[0]?.email_address ?? data?.email_addresses?.[0]?.email_address;
   let firstName = data?.external_accounts?.[0]?.first_name;
 
   // Need to handle if firstname not given, i.e. user created via sign up w. email. 
