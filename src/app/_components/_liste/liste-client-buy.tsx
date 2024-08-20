@@ -98,6 +98,8 @@ const ListeClientBuy: React.FC = ({}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
+
+  // If quantity set to 0, remove from list. 
   useEffect(() => {
 
     const debounceTimeout = setTimeout(() => {
@@ -123,6 +125,11 @@ const ListeClientBuy: React.FC = ({}) => {
       for (const item of data) {
         const compareItem = items.find((it) => it.id === item.id);
         if (!compareItem) continue;
+
+        // if removing item, dont do anything.
+        if(compareItem.quantity >= 0){
+          return;
+        }
 
         if (compareItem.quantity !== item.quantity) {
           // Call queries to update
