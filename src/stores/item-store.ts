@@ -15,6 +15,7 @@ export interface ItemSlice {
   clearItems: () => void;
   removeItem: (id: number) => void;
   increaseQuantity: (id: number) => void;
+  setQuantity: (id: number, quantity: number) => void;
   decreaseQuantity: (id: number) => void;
   toggleBought: (id: number) => void;
 }
@@ -43,6 +44,12 @@ export const createItemSlice: StateCreator<
   increaseQuantity: (id: number) => set((state) => ({
     items: state.items.map(item => 
       item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+    ),
+  })),
+
+  setQuantity: (id: number, quantity: number) => set((state) => ({
+    items: state.items.map(item => 
+      item.id === id ? { ...item, quantity: quantity } : item
     ),
   })),
 

@@ -15,6 +15,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import GoToButton from "../go-to-button";
 import { URLS } from "~/app/_urls/urls";
 import { usePathname, useSearchParams } from "next/navigation";
+import { pusherClient } from "~/server/pusher/pusherClient";
 
 const ListeClientBuy: React.FC = ({}) => {
   const [data, setData] = useState<ItemType[]>();
@@ -39,9 +40,60 @@ const ListeClientBuy: React.FC = ({}) => {
     decreaseQuantity,
     setUrlOnSuccess,
     setListId,
+    setQuantity,
     listId,
   } = useIndexStore();
 
+
+  useEffect(() => {
+    const channel = pusherClient
+      .subscribe("private-chat-lists")
+      .bind("evt::list-update", (data: { listId: number; type: string, itemId: number, itemName: string, quantity?: number }) => {
+        const { listId, type, itemId, itemName } = data;
+        if (type === "delete-item") {
+          removeItem(itemId);
+              // setData((prevData) => prevData?.filter(item => item.id !== itemId));
+        }
+        if (type === "added-item") {
+          // console.log("Hello", data )
+          const newDate = new Date();
+              const aNewItem: ItemType = {
+                listsId: listId,
+                name: itemName,
+                quantity: 1,
+                id: -1,
+                threshold: -1,
+                createdAt: newDate,
+                lastPurchased: newDate,
+                timeThreshold: "",
+                updatedAt: newDate,
+                bought: null,
+                archived: false
+              }
+
+              setData((prevData) => {
+                return prevData ? [ aNewItem, ...prevData] : [aNewItem];
+              })
+        }
+        // If quantity change.. 
+        if(type === 'quantity'){
+          if(data.listId === listId){
+            if(data.itemId && data.quantity){
+              setQuantity(data.itemId, data.quantity);
+            }
+
+          }
+        }
+      })
+      
+      
+    return () => {
+      channel.unbind();
+      pusherClient.unsubscribe("private-chat-lists");
+    };
+  }, []);
+
+  // Set listId and succes url for other actions.
   useEffect(() => {
     const listId = Number(searchParams.get("listId"));
     const action = searchParams.get("action");
@@ -75,9 +127,8 @@ const ListeClientBuy: React.FC = ({}) => {
     if (!data) {
       return;
     }
-    // console.log("Runs again and adds cola?")
+
     for (const dataItem of data) {
-      console.log(dataItem)
       if (
         dataItem?.name &&
         !items.find((item) => item.id === dataItem.id)
@@ -86,7 +137,7 @@ const ListeClientBuy: React.FC = ({}) => {
       }
     }
 
-    // // Include bought items
+    // Include bought items
     for (const dataItem of boughtItems) {
       if (
         dataItem?.name &&
@@ -101,7 +152,6 @@ const ListeClientBuy: React.FC = ({}) => {
 
   // If quantity set to 0, remove from list. 
   useEffect(() => {
-
     const debounceTimeout = setTimeout(() => {
       const deleteItems = items.filter(item => item.quantity <= 0 ? item : undefined).filter(notUndef => notUndef)
       
@@ -109,6 +159,7 @@ const ListeClientBuy: React.FC = ({}) => {
         if(item.id){
           deleteItemFromList({listId: listId, id: item.id});
           removeItem(item.id);
+          notifyDelete({itemId: item.id});
         }
       }
     }, 2000);
@@ -127,7 +178,7 @@ const ListeClientBuy: React.FC = ({}) => {
         if (!compareItem) continue;
 
         // if removing item, dont do anything.
-        if(compareItem.quantity >= 0){
+        if(compareItem.quantity <= 0){
           return;
         }
 
@@ -140,6 +191,7 @@ const ListeClientBuy: React.FC = ({}) => {
             const listId = Number(searchParams.get("listId"));
             const fetchedData = await getItemsFromList({ listId: listId });
             setData(fetchedData);
+            notifyQuantityUpdate({itemId: compareItem.id, quantity: compareItem.quantity});
           });
         }
       }
@@ -148,6 +200,36 @@ const ListeClientBuy: React.FC = ({}) => {
     return () => clearTimeout(debounceTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
+
+
+  const notifyQuantityUpdate = async ({itemId, quantity}: {itemId: number, quantity:number}) => {
+    return await fetch("/api/pusher/communication", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "quantity",
+        listId: listId,
+        itemId: itemId,
+        quantity: quantity
+      }),
+    });
+  }
+
+  const notifyDelete = async ({itemId}: {itemId: number}) => {
+    return await fetch("/api/pusher/communication", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "delete-item",
+        listId: listId,
+        itemId: itemId,
+      }),
+    });
+  }
 
   // Add "tilføj button"
   const addItemDiv = () => {
@@ -194,7 +276,6 @@ const ListeClientBuy: React.FC = ({}) => {
                           displayTextAfter={currentStoreItem.quantity}
                           increaseFunc={() =>{
 
-                            console.log("What?", currentStoreItem.id);
                             increaseQuantity(currentStoreItem.id)
                           }
                           }
@@ -345,3 +426,5 @@ const ListeClientBuy: React.FC = ({}) => {
 };
 
 export default ListeClientBuy;
+
+

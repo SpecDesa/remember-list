@@ -208,6 +208,64 @@ export async function createItem({itemName, listId, quantity}: {itemName: string
   return some;
 }
 
+export async function addUserToList({listId, emailOfUserToAdd}: {listId: number, emailOfUserToAdd: string}){
+  const user = auth();
+  if (!user.userId) throw new Error("Unauthorized");
+
+  const userDbObj = await getDBUserId(user.userId);
+
+  // Do not throw, but handle maybe deleted user?
+  if (!userDbObj?.id) {
+    // throw new Error("No user id gotten from mail");
+    return [];
+  }
+
+  const result = await db.transaction(async (tx) => {
+    // Find id of user to add based on email
+    const result = await tx.select({id: users.id})
+    .from(users)
+    .where(eq(users.email, emailOfUserToAdd.toLocaleLowerCase()));
+
+    const idOfUser = result?.[0];
+
+    console.log("Id of user", idOfUser)
+    if(!idOfUser || !idOfUser.id){
+      return;
+    }
+
+
+    console.log(`Is this user allowed to userId: ${userDbObj.id} and listId: ${listId}`)
+    // See if the original user is allowed to add to list.
+    const allowedToAdd = await tx.select({})
+    .from(listsUsers)
+    .where(
+      and(
+        eq(listsUsers.usersId, userDbObj.id),
+        eq(listsUsers.listsId, listId)
+    )
+  );
+
+  console.log("Allowed to add?", allowedToAdd)
+
+  if(!allowedToAdd || allowedToAdd.length <= 0){
+    return
+  }
+
+    type NewAddedUserToList = typeof listsUsers.$inferInsert;
+    const newAddedToList: NewAddedUserToList = {
+      usersId: idOfUser.id, 
+      listsId: listId,
+    };
+
+    const addedToList = await tx.insert(listsUsers).values(newAddedToList).returning();
+    console.log('added to list', addedToList);
+
+    return addedToList;
+  });
+
+  return result;
+}
+
 export async function createList({
   name,
   type,
