@@ -7,7 +7,7 @@ import type { UserSignup, UserDeleted } from "~/types/clerk/clerk-user";
 import { type ItemType, type ListStatus } from "./types";
 
 export interface RelatedUser {
-  avatars?: {clerkId: string, imageUrl:string, initials: string}[];
+  avatars?: { clerkId: string; imageUrl: string; initials: string }[];
   name: string;
   ids: string[]; // Define type for userEmail as string array
   listId: number;
@@ -15,16 +15,15 @@ export interface RelatedUser {
 }
 
 export async function getItems(listId: number) {
-
   const items: ItemType[] = await db.query.items.findMany({
     orderBy: (model, { desc }) => desc(model.id), // Make newest come first. maybe lowest quantity first.
-    where: (model, {eq}) => eq(model.listsId, listId ) 
+    where: (model, { eq }) => eq(model.listsId, listId),
   });
 
   return items;
 }
 
-export async function updateItemBought(itemId: number, bought: boolean){
+export async function updateItemBought(itemId: number, bought: boolean) {
   const user = auth();
   if (!user.userId) throw new Error("Unauthorized");
 
@@ -40,27 +39,35 @@ export async function updateItemBought(itemId: number, bought: boolean){
       where: (model, { eq }) => eq(model.id, itemId),
     });
 
-    if(!dbItem?.id){
-      console.error(`Could not find list that item to update belonged to. itemId: ${itemId}, dbItem id: ${dbItem?.id}`)
-      return
+    if (!dbItem?.id) {
+      console.error(
+        `Could not find list that item to update belonged to. itemId: ${itemId}, dbItem id: ${dbItem?.id}`,
+      );
+      return;
     }
     // find entry in listsusers where userId and listsid is there
     const userAllowedToUpdate = await tx.query.listsUsers.findFirst({
-      where: (model, {eq, and}) => and(eq(model.usersId, userDbObj.id), eq(model.listsId, dbItem.listsId) )
+      where: (model, { eq, and }) =>
+        and(eq(model.usersId, userDbObj.id), eq(model.listsId, dbItem.listsId)),
     });
 
-    if(!userAllowedToUpdate){
-      console.error(`User ${userDbObj.id} is not allowed to update item with id: ${itemId}`)
-      return 
+    if (!userAllowedToUpdate) {
+      console.error(
+        `User ${userDbObj.id} is not allowed to update item with id: ${itemId}`,
+      );
+      return;
     }
 
     // update bought
-    return await tx.update(items).set({bought: bought}).where(eq(items.id, itemId)).returning();
-})
+    return await tx
+      .update(items)
+      .set({ bought: bought })
+      .where(eq(items.id, itemId))
+      .returning();
+  });
 }
 
-
-export async function updateItemQuantity(itemId: number, quantity: number){
+export async function updateItemQuantity(itemId: number, quantity: number) {
   const user = auth();
   if (!user.userId) throw new Error("Unauthorized");
 
@@ -76,26 +83,33 @@ export async function updateItemQuantity(itemId: number, quantity: number){
       where: (model, { eq }) => eq(model.id, itemId),
     });
 
-    if(!dbItem?.id){
-      console.error(`Could not find list that item to update belonged to. itemId: ${itemId}, dbItem id: ${dbItem?.id}`)
-      return
+    if (!dbItem?.id) {
+      console.error(
+        `Could not find list that item to update belonged to. itemId: ${itemId}, dbItem id: ${dbItem?.id}`,
+      );
+      return;
     }
     // find entry in listsusers where userId and listsid is there
     const userAllowedToUpdate = await tx.query.listsUsers.findFirst({
-      where: (model, {eq, and}) => and(eq(model.usersId, userDbObj.id), eq(model.listsId, dbItem.listsId) )
+      where: (model, { eq, and }) =>
+        and(eq(model.usersId, userDbObj.id), eq(model.listsId, dbItem.listsId)),
     });
 
-    if(!userAllowedToUpdate){
-      console.error(`User ${userDbObj.id} is not allowed to update item with id: ${itemId}`)
-      return 
+    if (!userAllowedToUpdate) {
+      console.error(
+        `User ${userDbObj.id} is not allowed to update item with id: ${itemId}`,
+      );
+      return;
     }
     // Future check role of user (viewer, admin, executor, etc..)
 
     // update quantity
-    await tx.update(items).set({quantity: quantity}).where(eq(items.id, itemId)).returning();
+    await tx
+      .update(items)
+      .set({ quantity: quantity })
+      .where(eq(items.id, itemId))
+      .returning();
   });
-
-
 }
 
 export async function deleteUser(deleteObj: UserDeleted) {
@@ -128,10 +142,11 @@ export async function deleteUser(deleteObj: UserDeleted) {
         .select()
         .from(listsUsers)
         .where(eq(listsUsers.listsId, Number(listId.listIds)));
-      
 
       if (listLeft.length === 0) {
-        await tx.delete(listsRelationships).where(eq(listsRelationships.childListId, listId.listIds));
+        await tx
+          .delete(listsRelationships)
+          .where(eq(listsRelationships.childListId, listId.listIds));
         await tx.delete(items).where(eq(items.listsId, listId.listIds));
         await tx.delete(lists).where(eq(lists.id, Number(listId.listIds)));
       }
@@ -145,17 +160,22 @@ export async function signUpUser(authObj: UserSignup) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
   const data = authObj?.data;
   const accountId = data?.id;
-  const email = data?.external_accounts?.[0]?.email_address ?? data?.email_addresses?.[0]?.email_address;
+  const email =
+    data?.external_accounts?.[0]?.email_address ??
+    data?.email_addresses?.[0]?.email_address;
   let firstName = data?.external_accounts?.[0]?.first_name;
 
-  // Need to handle if firstname not given, i.e. user created via sign up w. email. 
-  if(!firstName || firstName === ''){
-    firstName = email?.split('@')?.[0] ?? 'N/A';
+  // Need to handle if firstname not given, i.e. user created via sign up w. email.
+  if (!firstName || firstName === "") {
+    firstName = email?.split("@")?.[0] ?? "N/A";
   }
 
   if (!accountId || !email || !firstName) {
-    console.error(`full data obj: ${authObj}`, `is data null ?: ${data}`)
-    console.error("Could not create user in db. accountId, email, or firstName was not set.", `firstname: ${firstName}, email: ${email}, accountId: ${accountId}`);
+    console.error(`full data obj: ${authObj}`, `is data null ?: ${data}`);
+    console.error(
+      "Could not create user in db. accountId, email, or firstName was not set.",
+      `firstname: ${firstName}, email: ${email}, accountId: ${accountId}`,
+    );
     return;
   }
 
@@ -168,7 +188,7 @@ export async function signUpUser(authObj: UserSignup) {
   await db.insert(users).values(newUser);
 }
 
-async function getDBUserId(authId: string) {
+export async function getDBUserId(authId: string) {
   const fullUser = await clerkClient.users.getUser(authId);
 
   if (!fullUser.emailAddresses[0]?.emailAddress)
@@ -182,7 +202,15 @@ async function getDBUserId(authId: string) {
   });
 }
 
-export async function createItem({itemName, listId, quantity}: {itemName: string, listId: number, quantity?: number}){
+export async function createItem({
+  itemName,
+  listId,
+  quantity,
+}: {
+  itemName: string;
+  listId: number;
+  quantity?: number;
+}) {
   const user = auth();
   if (!user.userId) throw new Error("Unauthorized");
 
@@ -200,15 +228,110 @@ export async function createItem({itemName, listId, quantity}: {itemName: string
 
   const some = await db.transaction(async (tx) => {
     const item = await tx.insert(items).values(newItem).returning();
-    if(!item?.[0]) return;
+    if (!item?.[0]) return;
 
-    return item?.[0].id
+    return item?.[0].id;
   });
 
   return some;
 }
 
-export async function addUserToList({listId, emailOfUserToAdd}: {listId: number, emailOfUserToAdd: string}){
+export async function getListFromId({ id }: { id: number }) {
+  const user = auth();
+  if (!user.userId) throw new Error("Unauthorized");
+
+  return await db.transaction((tx) => {
+    return tx.select().from(lists).where(eq(lists.id, id));
+  });
+}
+
+export async function getUsersOfList({ listId }: { listId: number }) {
+  const user = auth();
+  if (!user.userId) throw new Error("Unauthorized");
+
+  const userDbObj = await getDBUserId(user.userId);
+  // Do not throw, but handle maybe deleted user?
+  if (!userDbObj?.id) {
+    // throw new Error("No user id gotten from mail");
+    return [];
+  }
+
+  return await db.transaction(async (tx) => {
+    const isUserInList = await tx
+      .select()
+      .from(listsUsers)
+      .where(
+        and(
+          eq(listsUsers.listsId, listId),
+          eq(listsUsers.usersId, userDbObj.id),
+        ),
+      );
+    if (isUserInList.length <= 0) {
+      throw new Error("Not allowed to view users of list");
+    }
+
+    const usersOfList = await tx
+      .selectDistinctOn([users.id], {
+        id: users.id,
+        username: users.username,
+        email: users.email,
+      })
+      .from(listsUsers)
+      .innerJoin(users, eq(users.id, listsUsers.usersId))
+      .where(eq(listsUsers.listsId, listId));
+
+    return usersOfList;
+  });
+}
+
+export async function deleteUserFromList({
+  listId,
+  userId
+}: {
+  userId: number;
+  listId: number;
+}) {
+  const user = auth();
+  if (!user.userId) throw new Error("Unauthorized");
+
+  const userDbObj = await getDBUserId(user.userId);
+
+  // Do not throw, but handle maybe deleted user?
+  if (!userDbObj?.id) {
+    // throw new Error("No user id gotten from mail");
+    return [];
+  }
+
+  return await db.transaction(async (tx) => {
+    // See if the original user is allowed to add to list.
+    const allowedToAdd = await tx
+      .select()
+      .from(listsUsers)
+      .where(
+        and(
+          eq(listsUsers.usersId, userDbObj.id),
+          eq(listsUsers.listsId, listId)
+        )
+      );
+
+    console.log("Allowed to delete?", allowedToAdd);
+
+    if (!allowedToAdd || allowedToAdd.length <= 0) {
+      return;
+    }
+
+    return await tx.delete(listsUsers).where(and(eq(listsUsers.usersId, userId), eq(listsUsers.listsId, listId))).returning();
+  })
+
+}
+
+export async function addUserToList({
+  listId,
+  emailOfUserToAdd,
+}: {
+  listId: number;
+  emailOfUserToAdd: string;
+}) {
   const user = auth();
   if (!user.userId) throw new Error("Unauthorized");
 
@@ -222,43 +345,49 @@ export async function addUserToList({listId, emailOfUserToAdd}: {listId: number,
 
   const result = await db.transaction(async (tx) => {
     // Find id of user to add based on email
-    const result = await tx.select({id: users.id})
-    .from(users)
-    .where(eq(users.email, emailOfUserToAdd.toLocaleLowerCase()));
+    const result = await tx
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, emailOfUserToAdd.toLocaleLowerCase()));
 
     const idOfUser = result?.[0];
 
-    console.log("Id of user", idOfUser)
-    if(!idOfUser || !idOfUser.id){
+    console.log("Id of user", idOfUser);
+    if (!idOfUser || !idOfUser.id) {
       return;
     }
 
-
-    console.log(`Is this user allowed to userId: ${userDbObj.id} and listId: ${listId}`)
+    console.log(
+      `Is this user allowed to userId: ${userDbObj.id} and listId: ${listId}`,
+    );
     // See if the original user is allowed to add to list.
-    const allowedToAdd = await tx.select({})
-    .from(listsUsers)
-    .where(
-      and(
-        eq(listsUsers.usersId, userDbObj.id),
-        eq(listsUsers.listsId, listId)
-    )
-  );
+    const allowedToAdd = await tx
+      .select({})
+      .from(listsUsers)
+      .where(
+        and(
+          eq(listsUsers.usersId, userDbObj.id),
+          eq(listsUsers.listsId, listId),
+        ),
+      );
 
-  console.log("Allowed to add?", allowedToAdd)
+    console.log("Allowed to add?", allowedToAdd);
 
-  if(!allowedToAdd || allowedToAdd.length <= 0){
-    return
-  }
+    if (!allowedToAdd || allowedToAdd.length <= 0) {
+      return;
+    }
 
     type NewAddedUserToList = typeof listsUsers.$inferInsert;
     const newAddedToList: NewAddedUserToList = {
-      usersId: idOfUser.id, 
+      usersId: idOfUser.id,
       listsId: listId,
     };
 
-    const addedToList = await tx.insert(listsUsers).values(newAddedToList).returning();
-    console.log('added to list', addedToList);
+    const addedToList = await tx
+      .insert(listsUsers)
+      .values(newAddedToList)
+      .returning();
+    console.log("added to list", addedToList);
 
     return addedToList;
   });
@@ -289,12 +418,12 @@ export async function createList({
     type: type,
   };
 
-
   const some = await db.transaction(async (tx) => {
     const list = await tx.insert(lists).values(newList).returning();
-    if(!list?.[0]) return;
-    const resultListsUsers = await tx.insert(listsUsers)
-      .values({listsId: list[0].id, usersId: userDbObj.id})
+    if (!list?.[0]) return;
+    const resultListsUsers = await tx
+      .insert(listsUsers)
+      .values({ listsId: list[0].id, usersId: userDbObj.id })
       .returning();
 
     return {
@@ -302,15 +431,14 @@ export async function createList({
       name: newList.name,
       listType: newList.type,
       ids: resultListsUsers[0]?.usersId,
-      avatars: [{clerkId: user.userId}],
-    }
-  })
+      avatars: [{ clerkId: user.userId }],
+    };
+  });
 
   return some;
 }
 
-
-export async function deleteItem(listId: number, itemId: number){
+export async function deleteItem(listId: number, itemId: number) {
   const user = auth();
   if (!user.userId) throw new Error("Unauthorized");
 
@@ -321,7 +449,6 @@ export async function deleteItem(listId: number, itemId: number){
     // throw new Error("No user id gotten from mail");
     return [];
   }
-    
 
   // const userAuthId = userDbObj.clerkId;
   // Start a transaction
@@ -331,7 +458,7 @@ export async function deleteItem(listId: number, itemId: number){
   });
 }
 
-export async function deleteList(listId: number){
+export async function deleteList(listId: number) {
   const user = auth();
   if (!user.userId) throw new Error("Unauthorized");
 
@@ -342,12 +469,11 @@ export async function deleteList(listId: number){
     // throw new Error("No user id gotten from mail");
     return [];
   }
-    
 
   const userAuthId = userDbObj.clerkId;
 
   // Start a transaction
-   return await db.transaction(async (tx) => {
+  return await db.transaction(async (tx) => {
     // Get db userid
     const dbUsers = await tx
       .select()
@@ -362,25 +488,22 @@ export async function deleteList(listId: number){
       return;
     }
 
-    
-    // Handle trying to delete parent first ? 
-      // Throw that child list must be deleted first.
-    
+    // Handle trying to delete parent first ?
+    // Throw that child list must be deleted first.
+
     // console.log("Deleting list USers")
     // await tx
     // .delete(listsUsers)
     // .where(eq(listsUsers.listsId, listId));
     // Delete entries from lists_users where usersId matches the userId
     const deletedList = await tx
-    .delete(lists)
-    .where(eq(lists.id, listId))
-    .returning();
+      .delete(lists)
+      .where(eq(lists.id, listId))
+      .returning();
 
-    await tx.delete(items)
-        .where(eq(items.listsId, listId))
-        .returning()
-    
-    return deletedList; 
+    await tx.delete(items).where(eq(items.listsId, listId)).returning();
+
+    return deletedList;
   });
 }
 
@@ -392,8 +515,6 @@ export async function getMyLists() {
 
   if (!fullUser.emailAddresses[0]?.emailAddress)
     throw new Error("Couldn't find user in database");
-  // Somehow get userid == 1 e.g.
-  //
 
   const userDbObj = await db.query.users.findFirst({
     where: (model, { eq }) =>
@@ -437,14 +558,14 @@ export async function getMyLists() {
     .innerJoin(listsUsers, eq(listsUsers.usersId, users.id))
     .innerJoin(lists, eq(listsUsers.listsId, lists.id))
     .where(sql`${listsUsers.listsId} in ${listIds}`)
-    .groupBy((t) => [t.name, t.listId, t.listType]); 
+    .groupBy((t) => [t.name, t.listId, t.listType]);
 
   // Perform type assertion for userEmail
   const typedRelatedUsers: RelatedUser[] = relatedUsers.map((user) => ({
     name: user.name,
     ids: user.ids as string[],
     listId: user.listId,
-    listType: user.listType
+    listType: user.listType,
   }));
 
   return typedRelatedUsers;

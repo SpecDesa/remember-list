@@ -8,26 +8,16 @@ const pusherServer = getPusherInstance();
 
 
 export async function POST(req: Request) {  
-//   const auth = useAuth();
-//   const userInfo = useUser();
-
-  const listObj = await req.json() as unknown as {listId: number, email: string}
-//   console.log('listobj', listObj)
-  
-    const createdObj = await addUserToList({listId: listObj.listId, emailOfUserToAdd: listObj.email})
-    
-    console.log(createdObj)
-    
-    if(createdObj){
-    
+    const listObj = await req.json() as unknown as {listId: number, email: string}
+    const addedUserObj = await addUserToList({listId: listObj.listId, emailOfUserToAdd: listObj.email})
+        
+    if(addedUserObj){
     // Trigger user to be notified that new list is added?
-
-    //   await pusherServer.trigger(
-    //     'private-chat-lists',
-    //     "evt::list-create",
-    //     createdObj
-    //   )
-
+      await pusherServer.trigger(
+        'private-chat-lists',
+        "evt::list-add-user",
+        addedUserObj[0]
+      )
 
       return Response.json({msg: "Created"})
     }

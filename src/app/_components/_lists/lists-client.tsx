@@ -12,7 +12,6 @@ import Swipeable from "../swipeable";
 import DeleteListButton from "./delete-list-button";
 import { pusherClient } from "~/server/pusher/pusherClient";
 import { useIndexStore } from "~/stores/global-store";
-
 export const dynamic = "force-dynamic";
 
 interface ListsClientProps {
@@ -22,15 +21,29 @@ interface ListsClientProps {
 const ListsClient: FC<ListsClientProps> = ({ lists: listsProp }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [lists, setLists] = useState(listsProp);
-  const [activeOptionsListId, setActiveOptionsListId] = useState<number | null>(null);
-  const {
-    setUrlOnSuccess,
-    setListId,
-  } = useIndexStore();
+  const [activeOptionsListId, setActiveOptionsListId] = useState<number | null>(
+    null,
+  );
+  const { setUrlOnSuccess, setListId } = useIndexStore();
+  const router = useRouter();
+
 
   useEffect(() => {
     const channel = pusherClient
       .subscribe("private-chat-lists")
+      .bind(
+        "evt::list-add-user",
+        async (data: { id: number; listsId: number; usersId: number }) => {
+          const dbUserObj = await fetchUserDbId();
+          if(!dbUserObj){
+            return
+          }
+
+          if(data.usersId === dbUserObj.id){
+            router.refresh();
+          }
+        },
+      )
       .bind("evt::list-update", (data: { listId: number; type: string }) => {
         const { listId, type } = data;
         if (type === "delete") {
@@ -39,26 +52,21 @@ const ListsClient: FC<ListsClientProps> = ({ lists: listsProp }) => {
           );
         }
       })
-      .bind(
-        "evt::list-create",
-        (data: RelatedUser) => {
-          const aRelatedUser: RelatedUser & {listId: number} = {
-            name: data.name,
-            avatars: data.avatars, 
-            ids: data.ids,
-            listId: data.listId,
-            listType: data.listType
-          }
-          setLists((prevLists) => [...prevLists, aRelatedUser]);
-        },
-      );
+      .bind("evt::list-create", (data: RelatedUser) => {
+        const aRelatedUser: RelatedUser & { listId: number } = {
+          name: data.name,
+          avatars: data.avatars,
+          ids: data.ids,
+          listId: data.listId,
+          listType: data.listType,
+        };
+        setLists((prevLists) => [...prevLists, aRelatedUser]);
+      });
     return () => {
       channel.unbind();
       pusherClient.unsubscribe("private-chat-lists");
     };
   }, []);
-
-  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
@@ -86,10 +94,31 @@ const ListsClient: FC<ListsClientProps> = ({ lists: listsProp }) => {
     setActiveOptionsListId(null);
   };
 
+  const fetchUserDbId = async () => {
+    const resp = await fetch("/api/db/user", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (resp.status >= 200 && resp.status <= 299) {
+      return (await resp.json()) as
+        | {
+            id: number;
+            clerkId: string;
+            email: string;
+            createdAt: Date;
+            username: string;
+          }
+        | undefined;
+    }
+  };
+
   const renderedLists = useMemo(
     () =>
       lists.map((list, idx) => (
-        <div key={idx + "_outer"} className="flex flex-row relative">
+        <div key={idx + "_outer"} className="relative flex flex-row">
           <Swipeable
             key={idx + "_outer"}
             deleteButton={<DeleteListButton listId={list.listId} />}
@@ -118,7 +147,7 @@ const ListsClient: FC<ListsClientProps> = ({ lists: listsProp }) => {
             }}
           >
             <div
-              className="shadow-3xl transform bg-white transition-all duration-300 md:hover:translate-y-1 hover:cursor-pointer md:hover:bg-gray-300"
+              className="shadow-3xl transform bg-white transition-all duration-300 hover:cursor-pointer md:hover:translate-y-1 md:hover:bg-gray-300"
               onClick={() => handleListClick(list)}
             >
               <div className="mx-2 flex justify-between text-center text-sm text-black">
@@ -148,20 +177,20 @@ const ListsClient: FC<ListsClientProps> = ({ lists: listsProp }) => {
             </div>
             {activeOptionsListId === list.listId && (
               <div className="flex text-sm text-black">
-                <ul className="w-full"> 
+                <ul className="w-full">
                   <li
-                    className="flex justify-center ps-4 py-2 mt-2 bg-white w-full"
+                    className="mt-2 flex w-full justify-center bg-white py-2 ps-4"
                     onClick={() => {
-                      router.push(URLS.ADD_USER_TO_LIST)
+                      router.push(URLS.ADD_USER_TO_LIST);
                       closeOptionsMenu();
                     }}
                   >
                     Tilføj bruger til liste
                   </li>
                   <li
-                    className="flex justify-center ps-4 py-2 mt-1 mb-4 bg-white w-full"
+                    className="mb-4 mt-1 flex w-full justify-center bg-white py-2 ps-4"
                     onClick={() => {
-                      // router.push(URLS.REMOVE_USER_FROM_LIST)
+                      router.push(URLS.DELETE_USER_TO_LIST);
                       closeOptionsMenu();
                     }}
                   >
@@ -189,7 +218,10 @@ const ListsClient: FC<ListsClientProps> = ({ lists: listsProp }) => {
         </ScrollArea>
       </div>
       <div className="flex flex-wrap justify-center gap-4">
-        <GoToButton text="Tilføj ny liste" url={`${URLS.LISTS}?action=create`} />
+        <GoToButton
+          text="Tilføj ny liste"
+          url={`${URLS.LISTS}?action=create`}
+        />
       </div>
     </div>
   );
