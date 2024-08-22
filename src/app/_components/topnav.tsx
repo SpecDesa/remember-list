@@ -28,6 +28,14 @@ export function TopNav() {
                 }}/> */}
             {/* <UserButton /> */}
             <UserButton>
+              {/* Some day may be needed when implementing emails */}
+              {/* <UserButton.MenuItems>
+                <UserButton.Action
+                label="Få email notifikationer"
+                labelIcon={<DotIcon />}
+                onClick={() => alert('Email subscribed/unsubscribed')}
+                />
+                </UserButton.MenuItems> */}
             </UserButton>
 
             </SignedIn>

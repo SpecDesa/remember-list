@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from ".";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { ClerkMiddlewareAuth, auth, clerkClient } from "@clerk/nextjs/server";
 import { items, lists, listsRelationships, listsUsers, users } from "./schema";
 import { and, eq, sql } from "drizzle-orm/sql";
 import type { UserSignup, UserDeleted } from "~/types/clerk/clerk-user";
@@ -565,4 +565,33 @@ export async function getMyLists() {
   }));
 
   return typedRelatedUsers;
+}
+
+
+export async function checkViewListPermissionForClerk(authObj: ClerkMiddlewareAuth){
+  // const user = auth();
+  // console.log('auth obj', authObj().userId)
+  const authId = authObj()?.userId;
+  
+  if(!authId){
+    console.error("auth id is missing from authObj")
+    return;
+  }
+  
+  const result = await db.transaction(async (tx) => {
+    const user = await tx.select().from(users).where(eq(users.clerkId, authId));
+
+    if(!user || user.length === 0 || !user[0]?.id){
+      console.error("Could not find any user with that auth id")
+      return;
+    }
+
+    const userId = user[0].id;
+
+    const allowedLists = await tx.select().from(listsUsers).where(eq(listsUsers.usersId, userId));
+    return allowedLists;
+
+  })
+
+  return result;
 }
