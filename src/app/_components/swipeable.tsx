@@ -82,14 +82,14 @@ const Swipeable: React.FC<SwipeableProps> = ({ children,deleteButton,  signalPar
 
     if (isLeftSwipe) {
       if (distance > fullSwipeDistance) {
-        console.log("full swipe left - delete");
+        // console.log("full swipe left - delete");
         if(signalFullLeftSwipe){
           signalFullLeftSwipe()
         }
         setPosition(-fullSwipeDistance); // Move left by fullSwipeDistance
         setSwipeAction("delete");
       } else if (distance > partialSwipeDistance) {
-        console.log("partial swipe left - show options");
+        // console.log("partial swipe left - show options");
         if(signalPartialLeftSwipe){
           signalPartialLeftSwipe()
         }

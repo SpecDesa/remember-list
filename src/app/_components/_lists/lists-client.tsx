@@ -62,7 +62,6 @@ const ListsClient: FC<ListsClientProps> = () => {
       .bind("evt::list-update", (data: { listId: number; type: string }) => {
         const { listId, type } = data;
         if (type === "delete") {
-          console.log("Deleteing asasdasdas")
           setLists((prevLists) =>
             prevLists.filter((list) => list.listId !== listId),
           );
