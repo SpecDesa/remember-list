@@ -352,7 +352,6 @@ export async function addUserToList({
 
     const idOfUser = result?.[0];
 
-    console.log("Id of user", idOfUser);
     if (!idOfUser || !idOfUser.id) {
       return;
     }
@@ -362,7 +361,7 @@ export async function addUserToList({
     );
     // See if the original user is allowed to add to list.
     const allowedToAdd = await tx
-      .select({})
+      .select()
       .from(listsUsers)
       .where(
         and(
@@ -371,10 +370,8 @@ export async function addUserToList({
         ),
       );
 
-    console.log("Allowed to add?", allowedToAdd);
-
     if (!allowedToAdd || allowedToAdd.length <= 0) {
-      return;
+      return [];
     }
 
     type NewAddedUserToList = typeof listsUsers.$inferInsert;
@@ -387,7 +384,6 @@ export async function addUserToList({
       .insert(listsUsers)
       .values(newAddedToList)
       .returning();
-    console.log("added to list", addedToList);
 
     return addedToList;
   });

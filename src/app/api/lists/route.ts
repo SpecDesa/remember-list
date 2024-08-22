@@ -1,7 +1,10 @@
 import { useAuth, useUser } from "@clerk/nextjs";
-import { createList } from "~/server/db/queries";
+import { auth } from "@clerk/nextjs/server";
+import { NextRequest, NextResponse } from "next/server";
+import { RelatedUser, createList, getMyLists } from "~/server/db/queries";
 import { type ListStatus } from "~/server/db/types";
 import { getPusherInstance } from "~/server/pusher/pusherServer";
+import { clerkClient } from "@clerk/nextjs/server";
 
 const pusherServer = getPusherInstance();
 
@@ -22,3 +25,33 @@ export async function POST(req: Request) {
     }
     return Response.json({msg: "Didn't create list"}, {status: 500})
   }
+
+export async function GET(req: NextRequest){
+  const user = auth();
+  
+  if (!user.userId) {
+      return NextResponse.json({msg: "Unauthorized"}, {status: 401})
+  } 
+
+  const lists = await getMyLists();
+  await populateListsWithAvatars(lists);
+
+  return NextResponse.json(lists);
+
+}
+
+
+
+async function populateListsWithAvatars (lists: RelatedUser[]){
+  for (const list of lists) {
+    for (const id of list.ids) {
+      const user = await clerkClient.users.getUser(id);
+      list.avatars = list.avatars ?? [];
+      list.avatars.push({
+        clerkId: id,
+        imageUrl: user.imageUrl,
+        initials: (user.firstName?.charAt(0) ?? '') + (user.lastName?.charAt(0) ?? ''),
+      });
+    }
+  }
+}

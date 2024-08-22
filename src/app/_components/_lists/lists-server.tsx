@@ -4,7 +4,6 @@ import ListsClient from "./lists-client";
 import { clerkClient } from "@clerk/nextjs/server";
 
 export default async function ListsServer() {
-
   const populateListsWithAvatars = async (lists: RelatedUser[]) => {
     for (const list of lists) {
       for (const id of list.ids) {

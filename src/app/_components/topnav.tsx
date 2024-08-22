@@ -1,13 +1,20 @@
 'use client'
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { UploadButton } from "~/utils/uploadthing";
+// import { UploadButton } from "~/utils/uploadthing";
 import { URLS } from "../_urls/urls";
 
 
 export function TopNav() {
   const router = useRouter();
 
+  const DotIcon = () => {
+    return (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+        <path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z" />
+      </svg>
+    )
+  }
 
     return (
       <nav className="flex w-full items-center justify-between border-b p-4 text-xl font-semibold">
@@ -19,7 +26,10 @@ export function TopNav() {
               onClientUploadComplete={() => {
                 router.refresh();
                 }}/> */}
-            <UserButton />
+            {/* <UserButton /> */}
+            <UserButton>
+            </UserButton>
+
             </SignedIn>
         </div>
       </nav>

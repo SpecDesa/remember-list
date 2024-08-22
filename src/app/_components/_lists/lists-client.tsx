@@ -12,20 +12,35 @@ import Swipeable from "../swipeable";
 import DeleteListButton from "./delete-list-button";
 import { pusherClient } from "~/server/pusher/pusherClient";
 import { useIndexStore } from "~/stores/global-store";
+import Loading from "~/app/loading";
 export const dynamic = "force-dynamic";
 
 interface ListsClientProps {
   lists: RelatedUser[];
 }
 
-const ListsClient: FC<ListsClientProps> = ({ lists: listsProp }) => {
+const ListsClient: FC<ListsClientProps> = () => {
   const [isMounted, setIsMounted] = useState(false);
-  const [lists, setLists] = useState(listsProp);
+  const [lists, setLists] = useState<RelatedUser[]>([]);
   const [activeOptionsListId, setActiveOptionsListId] = useState<number | null>(
     null,
   );
   const { setUrlOnSuccess, setListId } = useIndexStore();
   const router = useRouter();
+
+  useEffect(() => {
+    fetch('/api/lists', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    }).then(async resp => {
+      const newLists = await resp.json() as RelatedUser[];
+      if(newLists.length !== lists.length){
+        setLists(newLists);
+      }
+    })
+  }, [])
 
 
   useEffect(() => {
@@ -47,6 +62,7 @@ const ListsClient: FC<ListsClientProps> = ({ lists: listsProp }) => {
       .bind("evt::list-update", (data: { listId: number; type: string }) => {
         const { listId, type } = data;
         if (type === "delete") {
+          console.log("Deleteing asasdasdas")
           setLists((prevLists) =>
             prevLists.filter((list) => list.listId !== listId),
           );
@@ -129,6 +145,11 @@ const ListsClient: FC<ListsClientProps> = ({ lists: listsProp }) => {
               })
                 .then(async (resp) => {
                   if (resp.status === 200) {
+
+                    setLists((prevLists) =>
+                      prevLists.filter((oldList) => oldList.listId !== list.listId),
+                    );
+
                     await fetch("/api/pusher/communication", {
                       method: "POST",
                       headers: {
@@ -214,7 +235,7 @@ const ListsClient: FC<ListsClientProps> = ({ lists: listsProp }) => {
       <h2 className="mb-2 ms-8 flex text-2xl">Dine Lister</h2>
       <div className="flex flex-wrap justify-center gap-4">
         <ScrollArea className="h-[380px] w-5/6 gap-4 rounded-md md:h-[600px] md:w-2/3">
-          <div className="flex flex-col gap-1 p-4">{renderedLists}</div>
+          {lists.length <= 0 ? <Loading skeletonHeight="h-80" skeletonWidth="w-80" />: <div className="flex flex-col gap-1 p-4">{renderedLists}</div>}
         </ScrollArea>
       </div>
       <div className="flex flex-wrap justify-center gap-4">
