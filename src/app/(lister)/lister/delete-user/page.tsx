@@ -20,7 +20,6 @@ export default function DeleteUserFromList() {
   useEffect(() => {
     if (listId && listId === -1) {
       const storedListId = Number(sessionStorage.getItem("huskelisten-listId"));
-      console.log("Gotten:", storedListId);
       if (storedListId) {
         setListId(storedListId);
       }
@@ -106,7 +105,6 @@ export default function DeleteUserFromList() {
   );
 
   async function handleDeleteUser(userId: number) {
-    console.log("here ikke?");
     await fetch("/api/db/lists/users", {
       method: "DELETE",
       body: JSON.stringify({ listId, userId }),

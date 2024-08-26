@@ -14,7 +14,6 @@ export async function GET(req: NextRequest){
     }
 
     const listId = req.nextUrl.searchParams.get('listId');
-    console.log("Hit it", listId)
     if(!listId){
         return NextResponse.json({msg: "Missing listId"}, {status: 400})
     }
@@ -38,13 +37,10 @@ export async function GET(req: NextRequest){
 
 export async function DELETE(req: NextRequest){
     const {listId, userId} = await req.json() as {listId:number, userId: number};
-    console.log(listId, userId, '..asdsadasd');
     if(!listId) return NextResponse.json({msg: "listId wasn't found."}, {status: 400});
 
 
     const deletedResult = await deleteUserFromList({listId, userId})
-
-    console.log('delete ->', deletedResult);
 
     if(!deletedResult || deletedResult.length <= 0){
         if(!listId) return NextResponse.json({msg: "No user was removed."}, {status: 200});

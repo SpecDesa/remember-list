@@ -70,6 +70,7 @@ export const listsRelationships = createTable(
     childListIdIndex: index("lists_relationships_child_list_id_idx").on(
       example.childListId
     ),
+    uniqueRelationship: unique("lists_relationships_parent_list_id_child_list_id_uq").on(example.parentListId, example.childListId),
   })
 );
 

@@ -19,9 +19,13 @@ interface ListsClientProps {
   lists: RelatedUser[];
 }
 
+interface ListType {
+
+}
+
 const ListsClient: FC<ListsClientProps> = () => {
   const [isMounted, setIsMounted] = useState(false);
-  const [lists, setLists] = useState<RelatedUser[]>([]);
+  const [lists, setLists] = useState<RelatedUser[] >([]);
   const [activeOptionsListId, setActiveOptionsListId] = useState<number | null>(
     null,
   );
@@ -198,8 +202,19 @@ const ListsClient: FC<ListsClientProps> = () => {
             {activeOptionsListId === list.listId && (
               <div className="flex text-sm text-black">
                 <ul className="w-full">
+                  {list.listType === ListStatus.SHOPPING.valueOf() &&
                   <li
-                    className="mt-2 flex w-full justify-center bg-white py-2 ps-4"
+                  className="mt-1 flex w-full justify-center bg-white py-2 ps-4"
+                  onClick={() => {
+                      router.push(URLS.LINK_LIST);
+                      closeOptionsMenu();
+                    }}
+                  >
+                    Link liste
+                  </li>
+                    }
+                  <li
+                    className="flex mt-1 w-full justify-center bg-white py-2 ps-4"
                     onClick={() => {
                       router.push(URLS.ADD_USER_TO_LIST);
                       closeOptionsMenu();

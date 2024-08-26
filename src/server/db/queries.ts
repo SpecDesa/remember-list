@@ -2,7 +2,7 @@ import "server-only";
 import { db } from ".";
 import { ClerkMiddlewareAuth, auth, clerkClient } from "@clerk/nextjs/server";
 import { items, lists, listsRelationships, listsUsers, users } from "./schema";
-import { and, eq, sql } from "drizzle-orm/sql";
+import { and, eq, or, sql } from "drizzle-orm/sql";
 import type { UserSignup, UserDeleted } from "~/types/clerk/clerk-user";
 import { type ItemType, type ListStatus } from "./types";
 
@@ -12,6 +12,8 @@ export interface RelatedUser {
   ids: string[]; // Define type for userEmail as string array
   listId: number;
   listType: string;
+  parentListId?: number | null;
+  childListId?: number[] | null;
 }
 
 export async function getItems(listId: number) {
@@ -240,8 +242,10 @@ export async function getListFromId({ id }: { id: number }) {
   const user = auth();
   if (!user.userId) throw new Error("Unauthorized");
 
-  return await db.transaction((tx) => {
-    return tx.select().from(lists).where(eq(lists.id, id));
+  return await db.transaction(async (tx) => {
+    return await tx.selectDistinct({id: lists.id, name: lists.name, type: lists.type, parentListId: listsRelationships.parentListId, childListId: listsRelationships.childListId}).from(lists)
+    .leftJoin(listsRelationships, or(eq(lists.id, listsRelationships.parentListId), eq(lists.id, listsRelationships.childListId)))
+    .where(eq(lists.id, id));
   });
 }
 
@@ -266,6 +270,7 @@ export async function getUsersOfList({ listId }: { listId: number }) {
           eq(listsUsers.usersId, userDbObj.id),
         ),
       );
+
     if (isUserInList.length <= 0) {
       throw new Error("Not allowed to view users of list");
     }
@@ -503,6 +508,8 @@ export async function deleteList(listId: number) {
   });
 }
 
+
+
 export async function getMyLists() {
   const user = auth();
   if (!user.userId) throw new Error("Unauthorized");
@@ -525,7 +532,7 @@ export async function getMyLists() {
 
   // Get lists that user is part of.
   const userLists = await db
-    .select({
+    .selectDistinct({
       listId: lists.id,
       listName: lists.name,
       listType: lists.type,
@@ -534,6 +541,7 @@ export async function getMyLists() {
     .innerJoin(listsUsers, eq(listsUsers.listsId, lists.id))
     .where(eq(listsUsers.usersId, userDbObj.id));
 
+    // console.log("uuasufiasjfkdlasjfas", joinedList)
   // If no list, return empty
   if (userLists.length === 0) {
     return []; // No lists found for the user
@@ -546,15 +554,19 @@ export async function getMyLists() {
   const relatedUsers = await db
     .select({
       name: lists.name,
-      ids: sql`array_agg(${users.clerkId})`,
+      ids: sql`array_agg(DISTINCT ${users.clerkId})`.as<string[]>(),
       listId: lists.id,
       listType: lists.type,
+      parentListId: listsRelationships.parentListId,
+      // childListId: listsRelationships.childListId,
+      childListId: sql`array_agg(DISTINCT ${listsRelationships.childListId})::int[]`.as<number[]>()
     })
     .from(users)
     .innerJoin(listsUsers, eq(listsUsers.usersId, users.id))
     .innerJoin(lists, eq(listsUsers.listsId, lists.id))
+    .leftJoin(listsRelationships, or(eq(lists.id, listsRelationships.parentListId), eq(lists.id, listsRelationships.childListId)))
     .where(sql`${listsUsers.listsId} in ${listIds}`)
-    .groupBy((t) => [t.name, t.listId, t.listType]);
+    .groupBy((t) => [t.name, t.listId, t.listType, t.parentListId]);
 
   // Perform type assertion for userEmail
   const typedRelatedUsers: RelatedUser[] = relatedUsers.map((user) => ({
@@ -562,6 +574,8 @@ export async function getMyLists() {
     ids: user.ids as string[],
     listId: user.listId,
     listType: user.listType,
+    parentListId: user.parentListId,
+    childListId: user.childListId
   }));
 
   return typedRelatedUsers;
@@ -594,4 +608,155 @@ export async function checkViewListPermissionForClerk(authObj: ClerkMiddlewareAu
   })
 
   return result;
+}
+
+
+export async function linkLists({childListId, parentListId}: {childListId: number, parentListId: number}){
+  console.log("Get all?", childListId, parentListId)
+  
+  const userDbObj = await getUserDbObj();
+  if (!userDbObj) {
+    return {errors: [{msg: "no user id gotten."}]};
+  }
+
+  let {errors} = await checkAuthAndUserId();
+  if(errors.length !== 0){
+    return [];
+  }
+
+
+  return await db.transaction( async (tx) => {
+
+    // Check first list allowed to edit?
+    let userAllowedToUpdate = await tx
+    .select()
+    .from(listsUsers)
+    .where(
+      and(
+        eq(listsUsers.listsId, childListId),
+        eq(listsUsers.usersId, userDbObj.id),
+      ),
+    );
+
+    if (!userAllowedToUpdate) {
+      console.error(
+        `User ${userDbObj.id} is not allowed to update item with id: ${childListId}`,
+      );
+      return;
+    }
+
+    // Check second list allowed to edit?
+    userAllowedToUpdate = await tx
+    .select()
+    .from(listsUsers)
+    .where(
+      and(
+        eq(listsUsers.listsId, parentListId),
+        eq(listsUsers.usersId, userDbObj.id),
+      ),
+    );
+
+
+    if (!userAllowedToUpdate) {
+      console.error(
+        `User ${userDbObj.id} is not allowed to update item with id: ${childListId}`,
+      );
+      return;
+    }
+
+    // Update relationship
+    type NewListRelationship = typeof listsRelationships.$inferInsert;
+    const newListRelationship: NewListRelationship = {
+    parentListId: parentListId,
+    childListId: childListId,
+  };
+    const updateResult = await tx.insert(listsRelationships).values(newListRelationship)
+    return updateResult;
+  })
+}
+
+
+
+
+export async function deleteLinkLists({parentListId, childListId}: {parentListId: number, childListId: number}){
+  const userDbObj = await getUserDbObj();
+  if (!userDbObj) {
+    return {errors: [{msg: "no user id gotten."}]};
+  }
+
+  let {errors} = await checkAuthAndUserId();
+  if(errors.length !== 0){
+    return [];
+  }
+
+
+  return await db.transaction( async (tx) => {
+
+    // Check first list allowed to edit?
+    let userAllowedToUpdate = await tx
+    .select()
+    .from(listsUsers)
+    .where(
+      and(
+        eq(listsUsers.listsId, parentListId),
+        eq(listsUsers.usersId, userDbObj.id),
+      ),
+    );
+
+    if (!userAllowedToUpdate) {
+      console.error(
+        `User ${userDbObj.id} is not allowed to update item with id: ${parentListId}`,
+      );
+      return;
+    }
+
+    // Check second list allowed to edit?
+    userAllowedToUpdate = await tx
+    .select()
+    .from(listsUsers)
+    .where(
+      and(
+        eq(listsUsers.listsId, childListId),
+        eq(listsUsers.usersId, userDbObj.id),
+      ),
+    );
+
+
+    if (!userAllowedToUpdate) {
+      console.error(
+        `User ${userDbObj.id} is not allowed to update item with id: ${childListId}`,
+      );
+      return;
+    }
+
+    const updateResult = await tx.delete(listsRelationships).where(and(eq(listsRelationships.parentListId,parentListId), eq(listsRelationships.childListId, childListId)));
+    return updateResult;
+  })
+}
+
+
+async function checkAuthAndUserId() {
+  const user = auth();
+  if (!user.userId) throw new Error("Unauthorized");
+
+  const userDbObj = await getUserDbObj();
+  
+  if (!userDbObj?.id) {
+    return {errors: [{msg: "no user id gotten."}]};
+  }
+
+  return {errors: []};
+}
+
+async function getUserDbObj (){
+  const user = auth();
+  if (!user.userId) throw new Error("Unauthorized");
+
+  const userDbObj = await getDBUserId(user.userId);
+
+  if (!userDbObj) {
+    return
+  }
+
+  return userDbObj
 }
