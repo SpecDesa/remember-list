@@ -1,6 +1,6 @@
 "use server";
 // ListeServer.tsx
-import { getItems, updateItemQuantity, updateItemBought, deleteItem } from '~/server/db/queries';
+import { getItems, updateItemQuantity, updateItemBought, deleteItem, updateRelationShip } from '~/server/db/queries';
 
 interface ListeServerProps {
   listId: number;
@@ -20,8 +20,12 @@ export const deleteItemFromList = async ({listId, id}: {listId: number, id: numb
   void deleteItem(listId, id);
 };
 
-export const updateItemBoughtFromList = async ({id, bought}: {id: number, bought: boolean}) => {
+export const updateItemBoughtFromList = async ({id, bought, listId}: {id: number, bought: boolean, listId?: number}) => {
+  if(listId){
+    void updateRelationShip({itemId: id, listId})
+  }
   void updateItemBought(id, bought);
+
 };
 
 

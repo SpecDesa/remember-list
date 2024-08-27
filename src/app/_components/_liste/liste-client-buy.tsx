@@ -302,6 +302,7 @@ const ListeClientBuy: React.FC = ({}) => {
                               void updateItemBoughtFromList({
                                 id: local.id,
                                 bought: true,
+                                listId: listId,
                               }).then(async () => {
                                 const listId = Number(
                                   searchParams.get("listId"),

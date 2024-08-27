@@ -26,6 +26,7 @@ export async function getItems(listId: number) {
 }
 
 export async function updateItemBought(itemId: number, bought: boolean) {
+
   const user = auth();
   if (!user.userId) throw new Error("Unauthorized");
 
@@ -69,7 +70,57 @@ export async function updateItemBought(itemId: number, bought: boolean) {
   });
 }
 
+
+export async function updateRelationShip({itemId, listId}:{itemId: number, listId: number}){
+  await db.transaction(async (tx) => {
+    const item = await tx.select().from(items).where(and(eq(items.listsId, listId), eq(items.id, itemId)));
+
+    if(item.length <= 0 || !item[0]?.name){
+      return; 
+    }
+
+    await updateRelationshipTable({key: item[0].name, origTableId: listId, value: item[0].quantity});
+  })
+}
+/**
+ * Will update the items table for quantity if a name matches.
+ * @param param0 
+ */
+async function updateRelationshipTable({key, origTableId, value}: {key: string, origTableId: number, value: number}){
+  await db.transaction(async (tx) => {
+    const relationShipTable = await tx.select().from(listsRelationships).where(eq(listsRelationships.childListId, origTableId));
+      // Check if there is a parent table to be updated
+      if(relationShipTable.length <= 0 || !relationShipTable[0]?.parentListId){
+        return;
+      }
+
+      // Get all names 
+      const itemNamesTable = await tx.select().from(items).where(and(eq(items.listsId, relationShipTable[0].parentListId), eq(items.archived, false)));
+      
+      if(itemNamesTable.length <= 0 ){
+        return;
+      }
+
+      // Check if there is similar items
+      const itemNames =  itemNamesTable.map(item => {
+        return {name: item.name, itemId: item.id, id: item.id, listId: item.listsId};
+      });
+
+      const match = itemNames.filter(item => {
+        return item.name?.toLocaleLowerCase() === key.toLocaleLowerCase()
+      });
+
+      if(match.length <= 0 || !match[0]?.listId){
+        return;
+      }
+
+      return await tx.update(items).set({quantity: value}).where(and(eq(sql`LOWER(${items.name})`, key.toLocaleLowerCase()), eq(items.listsId, match[0]?.listId) ));
+  })
+}
+
 export async function updateItemQuantity(itemId: number, quantity: number) {
+
+  // await updateRelationshipTable({key: "Mælk", value: quantity, origTableId: listId});
   const user = auth();
   if (!user.userId) throw new Error("Unauthorized");
 
